@@ -149,7 +149,7 @@ Load the library and define the resolution of the images:
 ```Julia
 julia> using FastSphericalHarmonics
 
-julia> lmax = 100;
+julia> lmax = 40;
 
 julia> Θ, Φ = sph_points(lmax+1);
 ```
