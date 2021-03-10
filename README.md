@@ -158,16 +158,21 @@ Load [Makie](http://makie.juliaplots.org/stable/) to create the images:
 ```Julia
 julia> using CairoMakie
 
-julia> axis = (xticks=MultiplesTicks(4, π, "π"), yticks=MultiplesTicks(4, π, "π"));
+julia> ticks = (xticks=MultiplesTicks(4, π, "π"), yticks=MultiplesTicks(4, π, "π"));
 ```
 
-Create images of some modes
+Create images of some modes:
 ```Julia
 julia> for l in 4:4, m in 0:l
            C = zeros(lmax+1, 2lmax+1)
-           C[sph_mode(4,2)] = 1
+           C[sph_mode(l,m)] = 1
            F = sph_evaluate(C)
-           save("mode$l$m.png", heatmap(Φ, Θ, F'; axis=axis))
+
+           scene, layout = layoutscene(; resolution=(400, 200))
+           axis = layout[1, 1] = Axis(scene; xticks=MultiplesTicks(4, π, "π"), yticks=MultiplesTicks(4, π, "π"))
+           heatmap!(axis, Φ, Θ, F')
+           scale!(scene, 1, 1)
+           save("mode$l$m.png", scene)
        end
 ```
 
