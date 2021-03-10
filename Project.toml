@@ -1,7 +1,7 @@
 name = "FastSphericalHarmonics"
 uuid = "d335c211-7587-445e-a753-f0b1fb7e445f"
 authors = ["Erik Schnetter <schnetter@gmail.com>"]
-version = "0.1.0"
+version = "1.0.0"
 
 [deps]
 FastTransforms = "057dd010-8810-581a-b7be-e3fc3b93f78c"
