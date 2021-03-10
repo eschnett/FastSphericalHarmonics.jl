@@ -85,7 +85,7 @@ Use [`sph_points`](@ref) to caluclate the location of the points on
 the sphere for the input array `F`.
 
 Use [`sph_mode`](@ref) to calculate the location in the output
-coefficient array for particular `l`,`m` modes.
+coefficient array for a particular `l`,`m` mode.
 
 See also: [`sph_transform`](@ref), [`sph_evaluate!`](@ref),
 [`sph_points`](@ref), [`sph_mode`](@ref)
@@ -114,7 +114,7 @@ Use [`sph_points`](@ref) to caluclate the location of the points on the
 sphere for the input array `F`.
 
 Use [`sph_mode`](@ref) to calculate the location in the output
-coefficient array for particular `l`,`m` modes.
+coefficient array for a particular `l`,`m` mode.
 
 See also: [`sph_transform!`](@ref), [`sph_evaluate`](@ref),
 [`sph_points`](@ref), [`sph_mode`](@ref)
@@ -131,7 +131,7 @@ by the point values. Use [`sph_evaluate`](@ref) for a non-mutating
 function.
 
 Use [`sph_mode`](@ref) to calculate the location in the input
-coefficient array for particular `l`,`m` modes.
+coefficient array for a particular `l`,`m` mode.
 
 Use [`sph_points`](@ref) to caluclate the location of the points on the
 sphere in the output array `F`.
@@ -160,7 +160,7 @@ You can use [`sph_evaluate!`](@ref) for more efficient a mutating
 function that overwrites its argument `C`.
 
 Use [`sph_mode`](@ref) to calculate the location in the input
-coefficient array for particular `l`,`m` modes.
+coefficient array for a particular `l`,`m` mode.
 
 Use [`sph_points`](@ref) to caluclate the location of the points on the
 sphere in the output array `F`.
@@ -173,6 +173,21 @@ sph_evaluate(C::Array{T,2}) where {T<:SpHTypes} = sph_evaluate!(copy(C))
 ################################################################################
 
 export sphv_mode
+"""
+    idx = sphv_mode(l::Integer, m::Integer, v::Integer)
+    idx::CartesianIndex{2}
+
+Calculate the Cartesian index `idx` for the `v` components of `l`,`m`
+mode. `v=1` is for the `θ` component, `v=2` for the `ϕ` component.
+This index can be used to access the coefficients, i.e. the result of
+[`sphv_transform`](@ref) or the input to [`sphv_evaluate`](@ref).
+
+Coefficients are stored in a two-dimensional array. Not all array
+elements are used.
+
+See also: [`sphv_transform!`](@ref), [`sphv_transform`](@ref),
+[`sphv_evaluate!`](@ref), [`sphv_evaluate`](@ref)
+"""
 function sphv_mode(l::Int, m::Int, v::Int)
     @assert l ≥ 1
     @assert -l ≤ m ≤ l
@@ -219,33 +234,133 @@ function sphv_mode(l::Integer, m::Integer, v::Integer)
     return sphv_mode(Int(l), Int(m), Int(v))
 end
 
-export sphv_transform
-function sphv_transform(F::Array{T,2}) where {T<:SpHTypes}
+export sphv_transform!
+"""
+    sphv_transform!(F::Array{T,2}) where {T<:SpHTypes}
+
+Transform an array of points `F` into vector spherical harmonics. The
+`θ` and `ϕ` components of a vector field are transformed
+independently, both by calling this function.
+
+This is an in-place transform, i.e. the array `F` will be overwritten
+by the coefficients. Use [`sphv_transform`](@ref) for a non-mutating
+function.
+
+Use [`sph_points`](@ref) to caluclate the location of the points on
+the sphere for the input array `F`.
+
+Use [`sphv_mode`](@ref) to calculate the location in the output
+coefficient array for a particular component of a particular `l`,`m`
+mode.
+
+See also: [`sphv_transform`](@ref), [`sphv_evaluate!`](@ref),
+[`sph_points`](@ref), [`sphv_mode`](@ref)
+"""
+function sphv_transform!(F::Array{T,2}) where {T<:SpHTypes}
     N, M = size(F)
     @assert M > 0 && N > 0
     @assert M == 2 * N - 1
     P = plan_sphv2fourier(F)
     PA = plan_sphv_analysis(F)
-    C = P \ (PA * F)
+    C = F
+    lmul!(PA, C)
+    ldiv!(P, C)
     return C
 end
+export sphv_transform
+"""
+    C = sphv_transform(F::Array{T,2}) where {T<:SpHTypes}
+    C::Array{T,2}
 
-export sphv_evaluate
-function sphv_evaluate(C::Array{T,2}) where {T<:SpHTypes}
+Transform an array of points `F` into vector spherical harmonics. The
+`θ` and `ϕ` components of a vector field are transformed
+independently, both by calling this function.
+
+You can use [`sphv_transform!`](@ref) for more efficient a mutating
+function that overwrites its argument `F`.
+
+Use [`sph_points`](@ref) to caluclate the location of the points on the
+sphere for the input array `F`.
+
+Use [`sphv_mode`](@ref) to calculate the location in the output
+coefficient array for a particular component of a particular `l`,`m`
+mode.
+
+See also: [`sphv_transform!`](@ref), [`sphv_evaluate`](@ref),
+[`sph_points`](@ref), [`sphv_mode`](@ref)
+"""
+sphv_transform(F::Array{T,2}) where {T<:SpHTypes} = sphv_transform!(copy(F))
+
+export sphv_evaluate!
+"""
+    sphv_evaluate!(C::Array{T,2}) where {T<:SpHTypes}
+
+Evaluate an array of vector spherical harmonic coefficients `C` on the
+grid points on a sphere. The `θ` and `ϕ` components of a vector field
+are evaluated independently, both by calling this function for the
+respective sets of coefficients.
+
+This is an in-place transform, i.e. the array `C` will be overwritten
+by the point values. Use [`sphv_evaluate`](@ref) for a non-mutating
+function.
+
+Use [`sphv_mode`](@ref) to calculate the location in the input
+coefficient array for a particular component of a particular `l`,`m`
+mode.
+
+Use [`sph_points`](@ref) to caluclate the location of the points on the
+sphere in the output array `F`.
+
+See also: [`sphv_evaluate`](@ref), [`sphv_transform!`](@ref),
+[`sphv_mode`](@ref), [`sph_points`](@ref)
+"""
+function sphv_evaluate!(C::Array{T,2}) where {T<:SpHTypes}
     N, M = size(C)
     @assert M > 0 && N > 0
     @assert M == 2 * N - 1
     P = plan_sphv2fourier(C)
     PS = plan_sphv_synthesis(C)
-    F = PS * (P * C)
+    F = C
+    lmul!(P, F)
+    lmul!(PS, F)
     return F
 end
+export sphv_evaluate
+"""
+    F = sphv_evaluate(C::Array{T,2}) where {T<:SpHTypes}
+    F::Array{T,2}
+
+Evaluate an array of vector spherical harmonic coefficients `C` on the
+grid points on a sphere. The `θ` and `ϕ` components of a vector field
+are evaluated independently, both by calling this function for the
+respective sets of coefficients.
+
+You can use [`sphv_evaluate!`](@ref) for more efficient a mutating
+function that overwrites its argument `C`.
+
+Use [`sphv_mode`](@ref) to calculate the location in the input
+coefficient array for a particular component of a particular `l`,`m`
+mode.
+
+Use [`sph_points`](@ref) to caluclate the location of the points on the
+sphere in the output array `F`.
+
+See also: [`sphv_evaluate!`](@ref), [`sphv_transform`](@ref),
+[`sphv_mode`](@ref), [`sph_points`](@ref)
+"""
+sphv_evaluate(C::Array{T,2}) where {T<:SpHTypes} = sphv_evaluate!(copy(C))
 
 ################################################################################
 
 # spinsph_mode
 
 export spinsph_transform
+"""
+    spinsph_transform(F::Array{Complex{Float64},2}, s::Int)
+
+Calculate the spin spherical harmonic transformation with spin weight
+`s`.
+"""
 function spinsph_transform(F::Array{Complex{Float64},2}, s::Int)
     N, M = size(F)
     @assert M > 0 && N > 0
@@ -257,6 +372,12 @@ function spinsph_transform(F::Array{Complex{Float64},2}, s::Int)
 end
 
 export spinsph_evaluate
+"""
+    spinsph_evaluate(C::Array{Complex{Float64},2}, s::Int)
+
+Evaluate the spin spherical harmonic transformation with spin weight
+`s` on points on the sphere.
+"""
 function spinsph_evaluate(C::Array{Complex{Float64},2}, s::Int)
     N, M = size(C)
     @assert M > 0 && N > 0

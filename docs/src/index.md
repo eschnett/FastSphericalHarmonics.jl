@@ -33,3 +33,20 @@ sph_transform
 sph_evaluate!
 sph_evaluate
 ```
+
+## Vector Spherical Harmonics
+
+```@docs
+sphv_mode
+sphv_transform!
+sphv_transform
+sphv_evaluate!
+sphv_evaluate
+```
+
+## Spin Spherical Harmonics
+
+```@docs
+spinsph_transform
+spinsph_evaluate
+```
