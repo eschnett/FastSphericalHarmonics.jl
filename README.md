@@ -171,8 +171,8 @@ julia> for l in 4:4, m in 0:l
        end
 ```
 
-![l=4, m=0 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode40.png)
-![l=4, m=1 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode41.png)
-![l=4, m=2 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode42.png)
-![l=4, m=3 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode43.png)
-![l=4, m=4 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode44.png)
+![l=4, m=0 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode40.png)
+![l=4, m=1 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode41.png)
+![l=4, m=2 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode42.png)
+![l=4, m=3 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode43.png)
+![l=4, m=4 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode44.png)
