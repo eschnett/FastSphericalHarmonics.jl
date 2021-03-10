@@ -167,12 +167,12 @@ julia> for l in 4:4, m in 0:l
            C = zeros(lmax+1, 2lmax+1)
            C[sph_mode(4,2)] = 1
            F = sph_evaluate(C)
-           save("mode$l$m.pdf", heatmap(Φ, Θ, F'; axis=axis))
+           save("mode$l$m.png", heatmap(Φ, Θ, F'; axis=axis))
        end
 ```
 
-![](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode40.pdf | width=100)
-![](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode41.pdf | width=100)
-![](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode42.pdf | width=100)
-![](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode43.pdf | width=100)
-![](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode44.pdf | width=100)
+![l=4, m=0 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode40.png | width=100)
+![l=4, m=1 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode41.png | width=100)
+![l=4, m=2 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode42.png | width=100)
+![l=4, m=3 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode43.png | width=100)
+![l=4, m=4 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/figures/mode44.png | width=100)
