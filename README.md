@@ -182,3 +182,185 @@ The `l=0`, `m≥0` modes of the Spherical Harmonics look like this:
 - `l=0`, `m=2`: ![l=4, m=2 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode42.png)
 - `l=0`, `m=3`: ![l=4, m=3 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode43.png)
 - `l=0`, `m=4`: ![l=4, m=4 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode44.png)
+
+### Example 3: Vector Spherical Harmonics
+
+The "usual" (scalar) spherical harmonics can only represent scalar
+fields on the sphere. Vector fields require a different basis, and can
+be represented via [Vector Spherical
+Harmonics](https://en.wikipedia.org/wiki/Vector_spherical_harmonics).
+Vector fields on the sphere have two components (`θ` and `ϕ`), both of
+which have coordinate singularities at the poles. There are two
+different sets of vector spherical harmonics, the *gradient* and the
+*curl* harmonics. Each vector field on the sphere can be decomposed
+into two parts, a gradient part and a curl part, and as their name
+indicates, the gradient and curl harmonics can represent the
+respective parts. The gradient harmonics are defined via the gradient
+of the scalar spherical harmonics, and the curl harmonics via their
+(2d) curl. 
+
+The `θ` and `ϕ` components of the gradient and curl harmonics are not
+independent. For example, the following four components are all
+proportional to `(cos θ) (cos ϕ)`:
+- `θ` component of`l=1`, `m=1` gradient harmonic 
+- `ϕ` component of`l=2`, `m=1` gradient harmonic 
+- `ϕ` component of`l=1`, `m=1` curl harmonic 
+- `θ` component of`l=2`, `m=1` curl harmonic 
+(see e.g. [here](https://en.wikipedia.org/wiki/Vector_spherical_harmonics)).
+
+`FastSphericalHarmonics.jl` follows `FastTransforms.jl`'s choice to
+transform the `θ` and `ϕ` components of a vector field separately,
+each yielding its own set of coefficients. The respective harmonic
+coefficients are stored in the coefficient arrays in different ways.
+
+Setup:
+```Julia
+julia> using FastSphericalHarmonics
+
+julia> lmax = 4;
+```
+
+`θ` components, calculated by setting the component index `v=1` when
+calling `sphv_mode`:
+```Julia
+julia> Cθ = Array{Any}(undef, lmax+1, 2lmax+1);
+
+julia> for l in 1:lmax, m in -l:l
+           Cθ[sphv_mode(l,m,1)] = (l,m)
+       end
+
+julia> Cθ
+5×9 Array{Any,2}:
+    (1, 0)  #undef      #undef     …  #undef     #undef      #undef
+    (2, 0)     (1, -1)     (1, 1)        (3, 3)     (4, -4)     (4, 4)
+    (3, 0)     (2, -1)     (2, 1)        (4, 3)  #undef      #undef
+    (4, 0)     (3, -1)     (3, 1)     #undef     #undef      #undef
+ #undef        (4, -1)     (4, 1)     #undef     #undef      #undef
+```
+
+`ϕ` components, calculated by setting the component index `v=2` when
+calling `sphv_mode`:
+```Julia
+julia> Cϕ = Array{Any}(undef, lmax+1, 2lmax+1);
+
+julia> for l in 1:lmax, m in -l:l
+           Cϕ[sphv_mode(l,m,2)] = (l,m)
+       end
+
+julia> Cϕ
+5×9 Array{Any,2}:
+    (1, 0)     (1, -1)     (1, 1)  …     (3, 3)     (4, -4)     (4, 4)
+    (2, 0)     (2, -1)     (2, 1)        (4, 3)  #undef      #undef
+    (3, 0)     (3, -1)     (3, 1)     #undef     #undef      #undef
+    (4, 0)     (4, -1)     (4, 1)     #undef     #undef      #undef
+ #undef     #undef      #undef        #undef     #undef      #undef
+```
+
+To represent a generic vector field on the sphere, one needs to
+calculate both its gradient and curl components. However, it is
+unlikely that one encounters such a field superposition in physics
+since it doesn't have a well-defined parity, and one usually knows
+whether a vector field is of gradient or of curl type. Transforming
+the two components of the vector field yields two sets of
+coefficients.
+
+The scalar field `cos θ` is the `l=1`, `m=0` spherical harmonic; it is
+smooth at the poles of the sphere -- the limit value at e.g. `θ = 0`
+is independent of `ϕ`. The field `sin θ` cannot be represented as a
+spherical harmonic since it has a kink at `θ = 0`. It is, however, the
+`θ` component of the vector field `[sin θ, 0]ᵀ`, which is a gradient
+vector spherical harmonic. Let us test this:
+
+Prepare the two components of the vector field `Fθ` and `Fϕ`:
+```Julia
+julia> using FastSphericalHarmonics
+
+julia> lmax = 4;
+
+julia> Θ, Φ = sph_points(lmax+1);
+
+julia> Fθ = [sin(θ) for θ in Θ, ϕ in Φ]
+5×9 Matrix{Float64}:
+ 0.309017  0.309017  0.309017  0.309017  …  0.309017  0.309017  0.309017
+ 0.809017  0.809017  0.809017  0.809017     0.809017  0.809017  0.809017
+ 1.0       1.0       1.0       1.0          1.0       1.0       1.0
+ 0.809017  0.809017  0.809017  0.809017     0.809017  0.809017  0.809017
+ 0.309017  0.309017  0.309017  0.309017     0.309017  0.309017  0.309017
+
+julia> Fϕ = [0.0 for θ in Θ, ϕ in Φ]
+5×9 Matrix{Float64}:
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+```
+
+Transform them:
+```Julia
+julia> Cθ = sphv_transform(Fθ)
+5×9 Matrix{Float64}:
+  2.89441      0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ -1.1907e-16   0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+  1.73238e-16  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ -1.06997e-16  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+  0.0          0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+
+julia> Cϕ = sphv_transform(Fϕ)
+5×9 Matrix{Float64}:
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+```
+Apart from round-off error, these coefficients contain only one
+non-zero component, namely the `l=1`, `m=0` gradient harmonic
+component (see also the output of `sphv_mode` for `Cθ` above to see
+which coefficients are stored where.)
+
+Let us now look at the vector field `[0, sin θ]ᵀ`:
+```Julia
+julia> using FastSphericalHarmonics
+
+julia> lmax = 4;
+
+julia> Θ, Φ = sph_points(lmax+1);
+
+julia> Fθ = [0.0 for θ in Θ, ϕ in Φ]
+5×9 Matrix{Float64}:
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+
+julia> Fϕ = [sin(θ) for θ in Θ, ϕ in Φ]
+5×9 Matrix{Float64}:
+ 0.309017  0.309017  0.309017  0.309017  …  0.309017  0.309017  0.309017
+ 0.809017  0.809017  0.809017  0.809017     0.809017  0.809017  0.809017
+ 1.0       1.0       1.0       1.0          1.0       1.0       1.0
+ 0.809017  0.809017  0.809017  0.809017     0.809017  0.809017  0.809017
+ 0.309017  0.309017  0.309017  0.309017     0.309017  0.309017  0.309017
+```
+
+Transform them:
+```Julia
+julia> Cθ = sphv_transform(Fθ)
+5×9 Matrix{Float64}:
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+
+julia> Cϕ = sphv_transform(Fϕ)
+5×9 Matrix{Float64}:
+  2.89441      0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ -1.1907e-16   0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+  1.73238e-16  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ -1.06997e-16  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+  0.0          0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+```
+In these coeffients, only the `l=1`, `m=0` curl harmonic coefficient
+is non-zero (apart from round-off errors).
