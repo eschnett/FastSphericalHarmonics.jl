@@ -22,12 +22,12 @@ and one that allocates its output.
 SpHTypes
 sph_points
 sph_lmax
+sph_mode
 ```
 
 ## Scalar Spherical Harmonics
 
 ```@docs
-sph_mode
 sph_transform!
 sph_transform
 sph_evaluate!
