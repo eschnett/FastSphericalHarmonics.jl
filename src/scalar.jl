@@ -1,28 +1,3 @@
-export sph_mode
-"""
-    idx = sph_mode(l::Integer, m::Integer)
-    idx::CartesianIndex{2}
-
-Calculate the Cartesian index `idx` for the `l`,`m` mode. This index
-can be used to access the coefficients, i.e. the result of
-[`sph_transform`](@ref) or the input to [`sph_evaluate`](@ref).
-
-Coefficients are stored in a two-dimensional array. Not all array
-elements are used.
-
-See also: [`sph_transform!`](@ref), [`sph_transform`](@ref),
-[`sph_evaluate!`](@ref), [`sph_evaluate`](@ref)
-"""
-function sph_mode(l::Int, m::Int)
-    @assert l ≥ 0
-    @assert -l ≤ m ≤ l
-    # (0,0) (1,-1) (1,1) (2,-2) (2,2)
-    # (1,0) (2,-1) (2,1)
-    # (2,0)
-    return CartesianIndex(l - abs(m) + 1, 2 * abs(m) + (m ≥ 0))
-end
-sph_mode(l::Integer, m::Integer) = sph_mode(Int(l), Int(m))
-
 export sph_transform!
 """
     sph_transform!(F::Array{T,2}) where {T<:SpHTypes}

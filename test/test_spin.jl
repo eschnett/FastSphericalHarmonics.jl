@@ -21,7 +21,8 @@
 end
 
 @testset "Laplacian" begin
-    lmax = 100
+    # lmax = 100
+    lmax = 2
 
     N = lmax + 1
     Θ, Φ = sph_points(N)

@@ -39,8 +39,12 @@ sph_laplace
 ## Spin Spherical Harmonics
 
 ```@docs
+spinsph_transform!
 spinsph_transform
+spinsph_evaluate!
 spinsph_evaluate
+spinsph_eth!
 spinsph_eth
+spinsph_ethbar!
 spinsph_ethbar
 ```
