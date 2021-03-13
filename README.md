@@ -194,7 +194,7 @@ Some preliminaries:
 ```Julia
 julia> using FastSphericalHarmonics
 
-julia> chop(x) = abs2(x) < 10eps(x) ? zero(x) : x;
+julia> chop(x) = abs2(x) < 100eps(x) ? zero(x) : x;
 
 julia> chop(x::Complex) = Complex(chop(real(x)), chop(imag(x)));
 ```
@@ -207,17 +207,41 @@ julia> lmax = 4;
 julia> Θ, Φ = sph_points(lmax+1);
 
 julia> F = [cos(θ) + sin(θ)*cos(ϕ) for θ in Θ, ϕ in Φ]
+5×9 Matrix{Float64}:
+  1.26007    1.18778     1.00472   …   0.796548   1.00472    1.18778
+  1.3968     1.20753     0.72827       0.183277   0.72827    1.20753
+  1.0        0.766044    0.173648     -0.5        0.173648   0.766044
+  0.221232   0.0319577  -0.447301     -0.992294  -0.447301   0.0319577
+ -0.64204   -0.714336   -0.897396     -1.10557   -0.897396  -0.714336
 ```
 
 We transform to scalar spherical harmonics, calculate the Laplacian
 (which is efficient in spectral space), and convert back to point
 values:
 ```Julia
-julia> C = sph_transform(F)
+julia> C = sph_transform(F); chop.(C)
+5×9 Matrix{Float64}:
+ 0.0      0.0  2.04665  0.0  0.0  0.0  0.0  0.0  0.0
+ 2.04665  0.0  0.0      0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0      0.0  0.0      0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0      0.0  0.0      0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0      0.0  0.0      0.0  0.0  0.0  0.0  0.0  0.0
 
-julia> ΔC = sph_laplace(C)
+julia> ΔC = sph_laplace(C); chop.(ΔC)
+5×9 Matrix{Float64}:
+  0.0      0.0  -4.09331  0.0  0.0  0.0  0.0  0.0  0.0
+ -4.09331  0.0   0.0      0.0  0.0  0.0  0.0  0.0  0.0
+  0.0      0.0   0.0      0.0  0.0  0.0  0.0  0.0  0.0
+  0.0      0.0   0.0      0.0  0.0  0.0  0.0  0.0  0.0
+  0.0      0.0   0.0      0.0  0.0  0.0  0.0  0.0  0.0
 
 julia> ΔF = sph_evaluate(ΔC)
+5×9 Matrix{Float64}:
+ -2.52015   -2.37555    -2.00943   …  -1.5931    -2.00943   -2.37555
+ -2.7936    -2.41506    -1.45654      -0.366554  -1.45654   -2.41506
+ -2.0       -1.53209    -0.347296      1.0       -0.347296  -1.53209
+ -0.442463  -0.0639154   0.894602      1.98459    0.894602  -0.0639154
+  1.28408    1.42867     1.79479       2.21113    1.79479    1.42867
 ```
 
 Since we chose `F` to consist of two `l=1` modes, we know its
@@ -232,9 +256,15 @@ harmonics. These are defined for complex functions, so we first
 convert the real array to a complex array, and then transform to
 spin-weighted spherical harmonics (of spin-weight `0`).
 ```Julia
-julia> F⁰ = Complex.(F)
+julia> F⁰ = Complex.(F);
 
-julia> C⁰ = spinsph_transform(F⁰, 0)
+julia> C⁰ = spinsph_transform(F⁰, 0); chop.(C⁰)
+5×9 Matrix{ComplexF64}:
+     0.0+0.0im  1.4472+0.0im  …  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 2.04665+0.0im     0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+     0.0+0.0im     0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+     0.0+0.0im     0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+     0.0+0.0im     0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
 ```
 Due to the way in which `FastTransforms.jl` defines spherical
 harmonics, and because we started with a real function `F`, the
@@ -251,17 +281,35 @@ We then apply the ð (["eth"](https://en.wikipedia.org/wiki/Eth))
 operator, which is the gradient when applied to a spin-0 function,
 yielding a spin-1 function.
 ```Julia
-julia> ðC¹ = spinsph_eth(C⁰, 0)
+julia> ðC¹ = spinsph_eth(C⁰, 0); chop.(ðC¹)
+5×9 Matrix{ComplexF64}:
+     0.0+0.0im  -2.04665+0.0im  …  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 2.89441+0.0im       0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+     0.0+0.0im       0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+     0.0+0.0im       0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+     0.0+0.0im       0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
 ```
-
+(TODO: Compare this to gradient of `F`.)
 
 Next we apply the ð̄ ("eth-bar") operator, which is the divergence when
 applied to a spin-1 function, yielding a spin-0 function again, which
 we evaluate on the grid points.
 ```Julia
-julia> ð̄ðC⁰ = spinsph_ethbar(ðC¹, 1)
+julia> ð̄ðC⁰ = spinsph_ethbar(ðC¹, 1); chop.(ð̄ðC⁰)
+5×9 Matrix{ComplexF64}:
+      0.0+0.0im  -2.89441+0.0im  …  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ -4.09331+0.0im       0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+      0.0+0.0im       0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+      0.0+0.0im       0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
+      0.0+0.0im       0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
 
-julia> ð̄ðF⁰ = spinsph_evaluate(ð̄ðC⁰, 0)
+julia> ð̄ðF⁰ = spinsph_evaluate(ð̄ðC⁰, 0); chop.(ð̄ðF⁰)
+5×9 Matrix{ComplexF64}:
+  -2.52015+0.0im    -2.37555+0.0im  …   -2.00943+0.0im    -2.37555+0.0im
+   -2.7936+0.0im    -2.41506+0.0im      -1.45654+0.0im    -2.41506+0.0im
+      -2.0+0.0im    -1.53209+0.0im     -0.347296+0.0im    -1.53209+0.0im
+ -0.442463+0.0im  -0.0639154+0.0im      0.894602+0.0im  -0.0639154+0.0im
+   1.28408+0.0im     1.42867+0.0im       1.79479+0.0im     1.42867+0.0im
 ```
 
 This function `ð̄ðF⁰` is the Laplacian of our original function `F`
@@ -269,21 +317,23 @@ above. It is complex, but since we started with a real function `F`,
 `ð̄ðF⁰` has a zero imaginay part (up to round-off):
 ```Julia
 julia> maximum(imag.(ð̄ðF⁰))
+1.1102230246251565e-16
 ```
 
 Of course, both ways of evaluating the Laplacian give the same result:
 ```Julia
 julia> real.(ð̄ðF⁰) ≈ ΔF
+true
 ```
 
-We can also apply the ð̄ ("eth-bar") operator first, and then the ð
-("eth") operator:
+We can also apply the ð̄ operator first, and then the ð operator:
 ```Julia
-julia> ð̄C⁻¹ = spinsph_ethbar(C⁰, 0)
+julia> ð̄C⁻¹ = spinsph_ethbar(C⁰, 0);
 
-julia> ðð̄C⁰ = spinsph_eth(ð̄C⁻¹, -1)
+julia> ðð̄C⁰ = spinsph_eth(ð̄C⁻¹, -1);
 
-julia> ðð̄F⁰ = spinsph_evaluate(ðð̄C⁰, 0)
+julia> ðð̄F⁰ = spinsph_evaluate(ðð̄C⁰, 0);
 
 julia> ðð̄F⁰ ≈ ΔF
+true
 ```
