@@ -1,4 +1,4 @@
-# FastSphericalHarmonics.jl
+2# FastSphericalHarmonics.jl
 
 East-to-use Spherical Harmonics, based on
 [`FastTransforms.jl`](https://github.com/JuliaApproximation/FastTransforms.jl)
@@ -289,7 +289,31 @@ julia> ðC¹ = spinsph_eth(C⁰, 0); chop.(ðC¹)
      0.0+0.0im       0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
      0.0+0.0im       0.0+0.0im     0.0+0.0im  0.0+0.0im  0.0+0.0im
 ```
-(TODO: Compare this to gradient of `F`.)
+
+We can evaluate this spin-1 function on the points on the sphere and
+thus read off the gradient of `F`:
+```Julia
+julia> ðF¹ = spinsph_evaluate(ðC¹, 1);
+
+julia> ∂θF = real(ðF¹)
+5×9 Matrix{Float64}:
+  0.657164      0.28605    0.0885849  …   1.15716    1.22574     1.02828
+  1.06331       0.6922     0.494734       1.56331    1.63189     1.43443
+  1.37051e-16  -0.371114  -0.568579       0.5        0.568579    0.371114
+ -1.06331      -1.43443   -1.63189       -0.563314  -0.494734   -0.6922
+ -0.657164     -1.02828   -1.22574       -0.157164  -0.0885849  -0.28605
+
+julia> cscθ∂ϕF = imag(ðF¹)
+5×9 Matrix{Float64}:
+  8.66754e-16  0.642788  0.984808  …  -0.866025  -0.984808  -0.642788
+ -5.4187e-17   0.642788  0.984808     -0.866025  -0.984808  -0.642788
+ -2.88227e-16  0.642788  0.984808     -0.866025  -0.984808  -0.642788
+  1.87818e-16  0.642788  0.984808     -0.866025  -0.984808  -0.642788
+ -4.87207e-16  0.642788  0.984808     -0.866025  -0.984808  -0.642788
+```
+We thus have `julia> ∇F = (∂θF, sin(θ) * cscθ∂ϕF)`. However, since
+`sin(θ)` has a coordinate singularity at the pole, it's best not to
+actually perform this multiplication.
 
 Next we apply the ð̄ ("eth-bar") operator, which is the divergence when
 applied to a spin-1 function, yielding a spin-0 function again, which
