@@ -12,7 +12,7 @@ The
 [`FastSphericalHarmonics.jl`](https://github.com/eschnett/FastSphericalHarmonics.jl)
 package wraps the
 [`FastTransforms.jl`](https://github.com/JuliaApproximation/FastTransforms.jl)
-Julia package to calculate Spherical Harmonics.
+Julia package to calculate spherical harmonics.
 
 `FastSphericalHarmonics.jl` is a powerful, efficient, and well thought
 out package. Unfortunately, its user interface is difficult to use for
@@ -23,7 +23,7 @@ are easier to use. It would be worthwhile to fold
 
 ## Features
 
-This package provides scalar, vector, and spin Spherical Harmonic
+This package provides scalar and spin spherical harmonic
 transforms for real and complex fields. The normalizations and
 conventions are chosen to be convenient for real fields, and are
 different from those usually used for complex spherical harmonics.
@@ -67,7 +67,7 @@ julia> F = randn(lmax+1, 2lmax+1)
   1.77786     1.00331   0.367563  -0.85635   -3.86593   -0.372401   0.569458     0.701771   0.756569
 ```
 
-Transform to Spherical Harmonics:
+Transform to spherical harmonics:
 ```
 julia> C = sph_transform(F)
 5×9 Matrix{Float64}:
@@ -81,7 +81,7 @@ julia> C = sph_transform(F)
 Note that the coefficient array `C` contains `(lmax+1) * (2lmax+1) =
 45` coefficients, more than the `(lmax+1)^2 = 25` coefficients we
 expected. There are some higher modes (with `l > lmax`) present as
-well. This makes the Spherical Harmonic transform invertible:
+well. This makes the spherical harmonic transform invertible:
 ```Julia
 julia> F′ = sph_evaluate(C)
 5×9 Matrix{Float64}:
@@ -176,191 +176,114 @@ julia> for l in 4:4, m in 0:l
        end
 ```
 
-The `l=0`, `m≥0` modes of the Spherical Harmonics look like this:
+The `l=0`, `m≥0` modes of the spherical harmonics look like this:
 - `l=0`, `m=0`: ![l=4, m=0 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode40.png)
 - `l=0`, `m=1`: ![l=4, m=1 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode41.png)
 - `l=0`, `m=2`: ![l=4, m=2 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode42.png)
 - `l=0`, `m=3`: ![l=4, m=3 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode43.png)
 - `l=0`, `m=4`: ![l=4, m=4 mode](https://github.com/eschnett/FastSphericalHarmonics.jl/blob/main/figures/mode44.png)
 
-### Example 3: Vector Spherical Harmonics
+### Example 3: Laplacian of Spherical Harmonics
 
-The "usual" (scalar) spherical harmonics can only represent scalar
-fields on the sphere. Vector fields require a different basis, and can
-be represented via [Vector Spherical
-Harmonics](https://en.wikipedia.org/wiki/Vector_spherical_harmonics).
-Vector fields on the sphere have two components (`θ` and `ϕ`), both of
-which have coordinate singularities at the poles. There are two
-different sets of vector spherical harmonics, the *gradient* and the
-*curl* harmonics. Each vector field on the sphere can be decomposed
-into two parts, a gradient part and a curl part, and as their name
-indicates, the gradient and curl harmonics can represent the
-respective parts. The gradient harmonics are defined via the gradient
-of the scalar spherical harmonics, and the curl harmonics via their
-(2d) curl. 
+We use both scalar and spin-weighted spherical harmonics to calculate
+derivatives. Spin-weighted spherical harmonics with spin-weight 0 are
+the same as scalar spherical harmonics, except with a different
+normalization.
 
-The `θ` and `ϕ` components of the gradient and curl harmonics are not
-independent. For example, the following four components are all
-proportional to `(cos θ) (cos ϕ)`:
-- `θ` component of`l=1`, `m=1` gradient harmonic 
-- `ϕ` component of`l=2`, `m=1` gradient harmonic 
-- `ϕ` component of`l=1`, `m=1` curl harmonic 
-- `θ` component of`l=2`, `m=1` curl harmonic 
-(see e.g. [here](https://en.wikipedia.org/wiki/Vector_spherical_harmonics)).
-
-`FastSphericalHarmonics.jl` follows `FastTransforms.jl`'s choice to
-transform the `θ` and `ϕ` components of a vector field separately,
-each yielding its own set of coefficients. The respective harmonic
-coefficients are stored in the coefficient arrays in different ways.
-
-Setup:
+Some preliminaries:
 ```Julia
 julia> using FastSphericalHarmonics
 
-julia> lmax = 4;
+julia> chop(x) = abs2(x) < 10eps(x) ? zero(x) : x;
+
+julia> chop(x::Complex) = Complex(chop(real(x)), chop(imag(x)));
 ```
 
-`θ` components, calculated by setting the component index `v=1` when
-calling `sphv_mode`:
+Choose a function (here `z + 2x` with `z = cos θ` and `x = sin θ cos
+ϕ`:
 ```Julia
-julia> Cθ = Array{Any}(undef, lmax+1, 2lmax+1);
-
-julia> for l in 1:lmax, m in -l:l
-           Cθ[sphv_mode(l,m,1)] = (l,m)
-       end
-
-julia> Cθ
-5×9 Matrix{Any}:
-    (1, 0)  #undef      #undef     #undef      #undef     #undef      #undef     #undef      #undef
-    (2, 0)     (1, -1)     (1, 1)     (2, -2)     (2, 2)     (3, -3)     (3, 3)     (4, -4)     (4, 4)
-    (3, 0)     (2, -1)     (2, 1)     (3, -2)     (3, 2)     (4, -3)     (4, 3)  #undef      #undef
-    (4, 0)     (3, -1)     (3, 1)     (4, -2)     (4, 2)  #undef      #undef     #undef      #undef
- #undef        (4, -1)     (4, 1)  #undef      #undef     #undef      #undef     #undef      #undef
-```
-
-`ϕ` components, calculated by setting the component index `v=2` when
-calling `sphv_mode`:
-```Julia
-julia> Cϕ = Array{Any}(undef, lmax+1, 2lmax+1);
-
-julia> for l in 1:lmax, m in -l:l
-           Cϕ[sphv_mode(l,m,2)] = (l,m)
-       end
-
-julia> Cϕ
-5×9 Matrix{Any}:
-    (1, 0)     (1, -1)     (1, 1)     (2, -2)     (2, 2)     (3, -3)     (3, 3)     (4, -4)     (4, 4)
-    (2, 0)     (2, -1)     (2, 1)     (3, -2)     (3, 2)     (4, -3)     (4, 3)  #undef      #undef
-    (3, 0)     (3, -1)     (3, 1)     (4, -2)     (4, 2)  #undef      #undef     #undef      #undef
-    (4, 0)     (4, -1)     (4, 1)  #undef      #undef     #undef      #undef     #undef      #undef
- #undef     #undef      #undef     #undef      #undef     #undef      #undef     #undef      #undef
-```
-
-To represent a generic vector field on the sphere, one needs to
-calculate both its gradient and curl components. However, it is
-unlikely that one encounters such a field superposition in physics
-since it doesn't have a well-defined parity, and one usually knows
-whether a vector field is of gradient or of curl type. Transforming
-the two components of the vector field yields two sets of
-coefficients.
-
-The scalar field `cos θ` is the `l=1`, `m=0` spherical harmonic; it is
-smooth at the poles of the sphere -- the limit value at e.g. `θ = 0`
-is independent of `ϕ`. The field `sin θ` cannot be represented as a
-spherical harmonic since it has a kink at `θ = 0`. It is, however, the
-`θ` component of the vector field `[sin θ, 0]ᵀ`, which is a gradient
-vector spherical harmonic. Let us test this:
-
-Prepare the two components of the vector field `Fθ` and `Fϕ`:
-```Julia
-julia> using FastSphericalHarmonics
-
 julia> lmax = 4;
 
 julia> Θ, Φ = sph_points(lmax+1);
 
-julia> Fθ = [sin(θ) for θ in Θ, ϕ in Φ]
-5×9 Matrix{Float64}:
- 0.309017  0.309017  0.309017  0.309017  0.309017  0.309017  0.309017  0.309017  0.309017
- 0.809017  0.809017  0.809017  0.809017  0.809017  0.809017  0.809017  0.809017  0.809017
- 1.0       1.0       1.0       1.0       1.0       1.0       1.0       1.0       1.0
- 0.809017  0.809017  0.809017  0.809017  0.809017  0.809017  0.809017  0.809017  0.809017
- 0.309017  0.309017  0.309017  0.309017  0.309017  0.309017  0.309017  0.309017  0.309017
-
-julia> Fϕ = [0.0 for θ in Θ, ϕ in Φ]
-5×9 Matrix{Float64}:
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+julia> F = [cos(θ) + sin(θ)*cos(ϕ) for θ in Θ, ϕ in Φ]
 ```
 
-Transform them:
+We transform to scalar spherical harmonics, calculate the Laplacian
+(which is efficient in spectral space), and convert back to point
+values:
 ```Julia
-julia> Cθ = sphv_transform(Fθ)
-5×9 Matrix{Float64}:
-  2.89441      0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- -1.1907e-16   0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
-  1.73238e-16  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- -1.06997e-16  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
-  0.0          0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+julia> C = sph_transform(F)
 
-julia> Cϕ = sphv_transform(Fϕ)
-5×9 Matrix{Float64}:
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+julia> ΔC = sph_laplace(C)
+
+julia> ΔF = sph_evaluate(ΔC)
 ```
-Apart from round-off error, these coefficients contain only one
-non-zero component, namely the `l=1`, `m=0` gradient harmonic
-component (see also the output of `sphv_mode` for `Cθ` above to see
-which coefficients are stored where.)
 
-Let us now look at the vector field `[0, sin θ]ᵀ`:
+Since we chose `F` to consist of two `l=1` modes, we know its
+Laplacian: `ΔF = -l(l+1) F`:
 ```Julia
-julia> using FastSphericalHarmonics
-
-julia> lmax = 4;
-
-julia> Θ, Φ = sph_points(lmax+1);
-
-julia> Fθ = [0.0 for θ in Θ, ϕ in Φ]
-5×9 Matrix{Float64}:
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
-
-julia> Fϕ = [sin(θ) for θ in Θ, ϕ in Φ]
-5×9 Matrix{Float64}:
- 0.309017  0.309017  0.309017  0.309017  0.309017  0.309017  0.309017  0.309017  0.309017
- 0.809017  0.809017  0.809017  0.809017  0.809017  0.809017  0.809017  0.809017  0.809017
- 1.0       1.0       1.0       1.0       1.0       1.0       1.0       1.0       1.0
- 0.809017  0.809017  0.809017  0.809017  0.809017  0.809017  0.809017  0.809017  0.809017
- 0.309017  0.309017  0.309017  0.309017  0.309017  0.309017  0.309017  0.309017  0.309017
+julia> ΔF ≈ -2F
+true
 ```
 
-Transform them:
+Now let's do the same calculation with spin-weighted spherical
+harmonics. These are defined for complex functions, so we first
+convert the real array to a complex array, and then transform to
+spin-weighted spherical harmonics (of spin-weight `0`).
 ```Julia
-julia> Cθ = sphv_transform(Fθ)
-5×9 Matrix{Float64}:
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+julia> F⁰ = Complex.(F)
 
-julia> Cϕ = sphv_transform(Fϕ)
-5×9 Matrix{Float64}:
-  2.89441      0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- -1.1907e-16   0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
-  1.73238e-16  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
- -1.06997e-16  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
-  0.0          0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+julia> C⁰ = spinsph_transform(F⁰, 0)
 ```
-In these coeffients, only the `l=1`, `m=0` curl harmonic coefficient
-is non-zero (apart from round-off errors).
+Due to the way in which `FastTransforms.jl` defines spherical
+harmonics, and because we started with a real function `F`, the
+imaginary part of `C⁰` is actually zero.
+
+We test that evaluating the spin-weighted spherical harmonics gives us
+back the original function `F`:
+```Julia
+julia> spinsph_evaluate(C⁰, 0) ≈ F
+true
+```
+
+We then apply the ð (["eth"](https://en.wikipedia.org/wiki/Eth))
+operator, which is the gradient when applied to a spin-0 function,
+yielding a spin-1 function.
+```Julia
+julia> ðC¹ = spinsph_eth(C⁰, 0)
+```
+
+
+Next we apply the ð̄ ("eth-bar") operator, which is the divergence when
+applied to a spin-1 function, yielding a spin-0 function again, which
+we evaluate on the grid points.
+```Julia
+julia> ð̄ðC⁰ = spinsph_ethbar(ðC¹, 1)
+
+julia> ð̄ðF⁰ = spinsph_evaluate(ð̄ðC⁰, 0)
+```
+
+This function `ð̄ðF⁰` is the Laplacian of our original function `F`
+above. It is complex, but since we started with a real function `F`,
+`ð̄ðF⁰` has a zero imaginay part (up to round-off):
+```Julia
+julia> maximum(imag.(ð̄ðF⁰))
+```
+
+Of course, both ways of evaluating the Laplacian give the same result:
+```Julia
+julia> real.(ð̄ðF⁰) ≈ ΔF
+```
+
+We can also apply the ð̄ ("eth-bar") operator first, and then the ð
+("eth") operator:
+```Julia
+julia> ð̄C⁻¹ = spinsph_ethbar(C⁰, 0)
+
+julia> ðð̄C⁰ = spinsph_eth(ð̄C⁻¹, -1)
+
+julia> ðð̄F⁰ = spinsph_evaluate(ðð̄C⁰, 0)
+
+julia> ðð̄F⁰ ≈ ΔF
+```
