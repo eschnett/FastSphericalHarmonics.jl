@@ -177,7 +177,7 @@ See also: [`spinsph_eth!`](@ref), [`spinsph_ethbar`](@ref),
 """
 spinsph_eth(C::Array{Complex{Float64},2}, s::Int) = spinsph_eth!(copy(C), s)
 
-export spinsph_ethbar
+export spinsph_ethbar!
 """
     spinsph_ethbar!(C::Array{Complex{Float64},2}, s::Int)
 
