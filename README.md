@@ -1,4 +1,4 @@
-2# FastSphericalHarmonics.jl
+# FastSphericalHarmonics.jl
 
 East-to-use Spherical Harmonics, based on
 [`FastTransforms.jl`](https://github.com/JuliaApproximation/FastTransforms.jl)
