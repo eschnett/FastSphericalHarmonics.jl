@@ -10,8 +10,8 @@
     @test mode_seen == sphones(Bool, N, M)
 end
 
-@testset "Scalar spherical harmonics: simple modes for $T" for T in [Float64,
-                                                                Complex{Float64}]
+@testset "Scalar spherical harmonics: simple modes ($T)" for T in [Float64,
+                                                              Complex{Float64}]
     lmax = 100
 
     N = lmax + 1
@@ -53,8 +53,8 @@ end
     @test F′ ≈ F
 end
 
-@testset "Scalar spherical harmonics: simple modes for $T" for T in [Float64,
-                                                                Complex{Float64}]
+@testset "Scalar spherical harmonics: simple modes ($T)" for T in [Float64,
+                                                              Complex{Float64}]
     lmax = 10
 
     N = lmax + 1
@@ -73,8 +73,8 @@ end
     end
 end
 
-@testset "Scalar spherical harmonics: linearity for $T" for T in [Float64,
-                                                             Complex{Float64}]
+@testset "Scalar spherical harmonics: linearity ($T)" for T in [Float64,
+                                                           Complex{Float64}]
     lmax = 100
 
     N = lmax + 1
@@ -101,8 +101,8 @@ end
     @test Cα ≈ α * C
 end
 
-@testset "Scalar spherical harmonics: duality for $T" for T in [Float64,
-                                                           Complex{Float64}]
+@testset "Scalar spherical harmonics: duality ($T)" for T in [Float64,
+                                                         Complex{Float64}]
     lmax = 100
 
     N = lmax + 1
@@ -125,8 +125,8 @@ end
     @test C′ ≈ C
 end
 
-@testset "Scalar spherical harmonics: orthonormality for $T" for T in [Float64,
-                                                                  Complex{Float64}]
+@testset "Scalar spherical harmonics: orthonormality ($T)" for T in [Float64,
+                                                                Complex{Float64}]
     lmax = 100
     atol = 4 / lmax^2
 
@@ -151,8 +151,8 @@ end
     end
 end
 
-@testset "Scalar spherical harmonics: Laplacian for $T" for T in [Float64,
-                                                             Complex{Float64}]
+@testset "Scalar spherical harmonics: Laplacian ($T)" for T in [Float64,
+                                                           Complex{Float64}]
     lmax = 100
 
     N = lmax + 1
