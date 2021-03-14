@@ -1,3 +1,32 @@
+export sph_mode
+"""
+    idx = sph_mode(l::Integer, m::Integer)
+    idx::CartesianIndex{2}
+
+Calculate the Cartesian index `idx` for the `l`,`m` mode. This index
+can be used to access the coefficients, i.e. the result of
+[`sph_transform`](@ref) or the input to [`sph_evaluate`](@ref).
+
+Coefficients are stored in a two-dimensional array. Not all array
+elements are used. See [this
+page](https://mikaelslevinsky.github.io/FastTransforms/transforms.html),
+section "sph2fourier", for details.
+
+See also: [`sph_transform!`](@ref), [`sph_transform`](@ref),
+[`sph_evaluate!`](@ref), [`sph_evaluate`](@ref)
+"""
+function sph_mode(l::Int, m::Int)
+    @assert l ≥ 0
+    @assert abs(m) ≤ l
+    # (0,0) (1,-1) (1,1) (2,-2) (2,2)
+    # (1,0) (2,-1) (2,1)
+    # (2,0)
+    return CartesianIndex(l - abs(m) + 1, 2 * abs(m) + (m ≥ 0))
+end
+sph_mode(l::Integer, m::Integer) = sph_mode(Int(l), Int(m))
+
+################################################################################
+
 export sph_transform!
 """
     sph_transform!(F::Array{T,2}) where {T<:SpHTypes}
@@ -26,6 +55,7 @@ function sph_transform!(F::Array{T,2}) where {T<:SpHTypes}
     ldiv!(P, C)
     return C
 end
+
 export sph_transform
 """
     C = sph_transform(F::Array{T,2}) where {T<:SpHTypes}
@@ -45,6 +75,8 @@ See also: [`sph_transform!`](@ref), [`sph_evaluate`](@ref),
 [`sph_points`](@ref), [`sph_mode`](@ref)
 """
 sph_transform(F::Array{T,2}) where {T<:SpHTypes} = sph_transform!(copy(F))
+
+################################################################################
 
 export sph_evaluate!
 """
@@ -75,6 +107,7 @@ function sph_evaluate!(C::Array{T,2}) where {T<:SpHTypes}
     lmul!(PS, F)
     return F
 end
+
 export sph_evaluate
 """
     F = sph_evaluate(C::Array{T,2}) where {T<:SpHTypes}
@@ -94,6 +127,8 @@ See also: [`sph_evaluate!`](@ref), [`sph_transform`](@ref),
 [`sph_mode`](@ref), [`sph_points`](@ref)
 """
 sph_evaluate(C::Array{T,2}) where {T<:SpHTypes} = sph_evaluate!(copy(C))
+
+################################################################################
 
 export sph_laplace!
 """

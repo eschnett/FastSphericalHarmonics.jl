@@ -1,4 +1,31 @@
-# spinsph_mode
+export spinsph_mode
+"""
+    idx = spinsph_mode(l::Integer, m::Integer, s::Integer)
+    idx::CartesianIndex{2}
+
+Calculate the Cartesian index `idx` for the `l`,`m` mode for spin
+weight `s`. This index can be used to access the coefficients, i.e.
+the result of [`spinsph_transform`](@ref) or the input to
+[`spinsph_evaluate`](@ref).
+
+Coefficients are stored in a two-dimensional array. Not all array
+elements are used. See [this
+page](https://mikaelslevinsky.github.io/FastTransforms/transforms.html),
+section "spinsph2fourier", for details.
+
+See also: [`spinsph_transform!`](@ref), [`spinsph_transform`](@ref),
+[`spinsph_evaluate!`](@ref), [`spinsph_evaluate`](@ref)
+"""
+function spinsph_mode(s::Int, l::Int, m::Int)
+    @assert l ≥ abs(s)
+    @assert abs(m) ≤ l
+    return CartesianIndex(l - max(abs(s), abs(m)) + 1, 2 * abs(m) + (m ≥ 0))
+end
+function spinsph_mode(s::Integer, l::Integer, m::Integer)
+    return spinsph_mode(Int(s), Int(l), Int(m))
+end
+
+################################################################################
 
 export spinsph_transform!
 """
@@ -12,11 +39,11 @@ non-mutating function.
 Use [`sph_points`](@ref) to caluclate the location of the points on
 the sphere for the input array `F`.
 
-Use [`sph_mode`](@ref) to calculate the location in the output
-coefficient array for a particular `l`,`m` mode.
+Use [`spinsph_mode`](@ref) to calculate the location in the output
+coefficient array for a particular `l`,`m` mode with spin weight `s`.
 
 See also: [`spinsph_transform`](@ref), [`spinsph_evaluate!`](@ref),
-[`sph_points`](@ref), [`sph_mode`](@ref)
+[`sph_points`](@ref), [`spinsph_mode`](@ref)
 """
 function spinsph_transform!(F::Array{Complex{Float64},2}, s::Int)
     N, M = size(F)
@@ -29,6 +56,7 @@ function spinsph_transform!(F::Array{Complex{Float64},2}, s::Int)
     ldiv!(P, C)
     return C
 end
+
 export spinsph_transform
 """
     C = spinsph_transform!(F::Array{Complex{Float64},2}, s::Int)
@@ -41,15 +69,17 @@ mutating function that overwrites its argument `F`.
 Use [`sph_points`](@ref) to caluclate the location of the points on
 the sphere for the input array `F`.
 
-Use [`sph_mode`](@ref) to calculate the location in the output
-coefficient array for a particular `l`,`m` mode.
+Use [`spinsph_mode`](@ref) to calculate the location in the output
+coefficient array for a particular `l`,`m` mode with spin weight `s`.
 
 See also: [`spinsph_transform!`](@ref), [`spinsph_evaluate`](@ref),
-[`sph_points`](@ref), [`sph_mode`](@ref)
+[`sph_points`](@ref), [`spinsph_mode`](@ref)
 """
 function spinsph_transform(F::Array{Complex{Float64},2}, s::Int)
     return spinsph_transform!(copy(F), s)
 end
+
+################################################################################
 
 export spinsph_evaluate!
 """
@@ -60,14 +90,14 @@ Evaluate the spin spherical harmonic transformation with spin weight
 array `C` will be overwritten by the point values. Use
 [`spinsph_evaluate`](@ref) for a non-mutating function.
 
-Use [`sph_mode`](@ref) to calculate the location in the input
-coefficient array for a particular `l`,`m` mode.
+Use [`spinsph_mode`](@ref) to calculate the location in the input
+coefficient array for a particular `l`,`m` mode with spin weight `s`.
 
 Use [`sph_points`](@ref) to caluclate the location of the points on the
 sphere in the output array `F`.
 
 See also: [`spinsph_evaluate`](@ref), [`spinsph_transform!`](@ref),
-[`sph_mode`](@ref), [`sph_points`](@ref)
+[`spinsph_mode`](@ref), [`sph_points`](@ref)
 """
 function spinsph_evaluate!(C::Array{Complex{Float64},2}, s::Int)
     N, M = size(C)
@@ -80,6 +110,7 @@ function spinsph_evaluate!(C::Array{Complex{Float64},2}, s::Int)
     lmul!(PS, F)
     return F
 end
+
 export spinsph_evaluate
 """
     F = spinsph_evaluate(C::Array{Complex{Float64},2}, s::Int)
@@ -90,70 +121,21 @@ Evaluate the spin spherical harmonic transformation with spin weight
 for more efficient a mutating function that overwrites its argument
 `C`.
 
-Use [`sph_mode`](@ref) to calculate the location in the input
-coefficient array for a particular `l`,`m` mode.
+Use [`spinsph_mode`](@ref) to calculate the location in the input
+coefficient array for a particular `l`,`m` mode with spin weight `s`.
 
 Use [`sph_points`](@ref) to caluclate the location of the points on the
 sphere in the output array `F`.
 
 See also: [`spinsph_evaluate!`](@ref), [`spinsph_transform`](@ref),
-[`sph_mode`](@ref), [`sph_points`](@ref)
+[`spinsph_mode`](@ref), [`sph_points`](@ref)
 """
 function spinsph_evaluate(C::Array{Complex{Float64},2}, s::Int)
     return spinsph_evaluate!(copy(C), s)
 end
 
-export spinsph_eth!
-"""
-    spinsph_eth!(C::Array{Complex{Float64},2}, s::Int)
+################################################################################
 
-Apply the differential operator ð ("eth") to the coefficients `C`.
-This raises the spin weight `s` by 1. For a real function of spin
-weight 0, this is equivalent to calculating the gradient.
-
-This is an in-place transform, i.e. the array `C` will be overwritten
-by the coefficients. Use [`spinsph_eth`](@ref) for a non-mutating
-function.
-
-This function is the converse of [`spinsph_ethbar!`](@ref), which is a
-derivative operator lowering the spin weight.
-
-Use [`sph_mode`](@ref) to calculate the location in the output
-coefficient array for a particular `l`,`m` mode.
-
-See also: [`spinsph_eth`](@ref), [`spinsph_ethbar!`](@ref),
-[`sph_mode`](@ref)
-"""
-function spinsph_eth!(C::Array{Complex{Float64},2}, s::Int)
-    N, M = size(C)
-    @assert M > 0 && N > 0
-    @assert M == 2 * N - 1
-    lmax = N - 1
-    mmax = M ÷ 2
-
-    # ðC = zero(C)
-    # for l in 1:lmax
-    #     ðC[l, 1] = sqrt(l * (l + 1)) * C[l + 1, 1]
-    # end
-    # for m in 1:mmax, l in 0:lmax
-    #     ðC[l + 1, 2m + 0] = -sqrt((l + m) * (l + m + 1)) * C[l + 1, 2m + 0]
-    #     ðC[l + 1, 2m + 1] = +sqrt((l + m) * (l + m + 1)) * C[l + 1, 2m + 1]
-    # end
-
-    ðC = C
-    for l in 0:(lmax + mmax), m in 0:l
-        if l - lmax ≤ m ≤ mmax
-            if m == 0
-                ðC[sph_mode(l, m)] *= sqrt((l - s) * (l + s + 1))
-            else
-                ðC[sph_mode(l, -m)] *= -sqrt((l - s) * (l + s + 1))
-                ðC[sph_mode(l, +m)] *= +sqrt((l - s) * (l + s + 1))
-            end
-        end
-    end
-
-    return ðC
-end
 export spinsph_eth
 """
     ðC = spinsph_eth(C::Array{Complex{Float64},2}, s::Int)
@@ -163,62 +145,38 @@ Apply the differential operator ð ("eth") to the coefficients `C`.
 This raises the spin weight `s` by 1. For a real function of spin
 weight 0, this is equivalent to calculating the gradient.
 
-You can use [`spinsph_eth!`](@ref) for more efficient a mutating
-function that overwrites its argument `C`.
-
 This function is the converse of [`spinsph_ethbar`](@ref), which is a
 derivative operator lowering the spin weight.
 
-Use [`sph_mode`](@ref) to calculate the location in the output
-coefficient array for a particular `l`,`m` mode.
+Use [`spinsph_mode`](@ref) to calculate the location in the output
+coefficient array for a particular `l`,`m` mode with spin weight `s`.
 
-See also: [`spinsph_eth!`](@ref), [`spinsph_ethbar`](@ref),
-[`sph_mode`](@ref)
+See also: [`spinsph_ethbar`](@ref), [`spinsph_mode`](@ref)
 """
-spinsph_eth(C::Array{Complex{Float64},2}, s::Int) = spinsph_eth!(copy(C), s)
+function spinsph_eth(C::Array{Complex{Float64},2}, s::Int)
+    # spinsph_eth!(copy(C), s)
 
-export spinsph_ethbar!
-"""
-    spinsph_ethbar!(C::Array{Complex{Float64},2}, s::Int)
-
-Apply the differential operator ð̄ ("eth-bar") to the coefficients `C`.
-This lowers the spin weight `s` by 1. For a function of spin weight 1,
-this is equivalent to calculating the divergence.
-
-This is an in-place transform, i.e. the array `C` will be overwritten
-by the coefficients. Use [`spinsph_ethbar`](@ref) for a non-mutating
-function.
-
-This function is the converse of [`spinsph_eth!`](@ref), which is a
-derivative operator raising the spin weight.
-
-Use [`sph_mode`](@ref) to calculate the location in the output
-coefficient array for a particular `l`,`m` mode.
-
-See also: [`spinsph_ethvar`](@ref), [`spinsph_eth!`](@ref),
-[`sph_mode`](@ref)
-"""
-function spinsph_ethbar!(C::Array{Complex{Float64},2}, s::Int)
     N, M = size(C)
     @assert M > 0 && N > 0
     @assert M == 2 * N - 1
     lmax = N - 1
     mmax = M ÷ 2
 
-    ð̄C = C
-    for l in 0:(lmax + mmax), m in 0:l
-        if l - lmax ≤ m ≤ mmax
-            if m == 0
-                ð̄C[sph_mode(l, m)] *= -sqrt((l + s) * (l - s + 1))
-            else
-                ð̄C[sph_mode(l, -m)] *= +sqrt((l + s) * (l - s + 1))
-                ð̄C[sph_mode(l, +m)] *= -sqrt((l + s) * (l - s + 1))
-            end
+    ðC = zero(C)
+    for l in max(abs(s + 1), abs(s)):(lmax + mmax), m in (-l):l
+        if l - lmax ≤ abs(m) ≤ mmax
+            sgn = m ≥ 0 ? 1 : -1
+            ðC[spinsph_mode(s + 1, l, m)] = sgn *
+                                            sqrt((l - s) * (l + s + 1)) *
+                                            C[spinsph_mode(s, l, m)]
         end
     end
 
-    return ð̄C
+    return ðC
 end
+
+################################################################################
+
 export spinsph_ethbar
 """
     ðC = spinsph_ethbar(C::Array{Complex{Float64},2}, s::Int)
@@ -228,18 +186,32 @@ Apply the differential operator ð̄ ("eth-bar") to the coefficients `C`.
 This lowers the spin weight `s` by 1. For a function of spin weight 1,
 this is equivalent to calculating the divergence.
 
-You can use [`spinsph_ethbar!`](@ref) for more efficient a mutating
-function that overwrites its argument `C`.
-
 This function is the converse of [`spinsph_eth`](@ref), which is a
 derivative operator raising the spin weight.
 
-Use [`sph_mode`](@ref) to calculate the location in the output
-coefficient array for a particular `l`,`m` mode.
+Use [`spinsph_mode`](@ref) to calculate the location in the output
+coefficient array for a particular `l`,`m` mode with spin weight `s`.
 
-See also: [`spinsph_ethbar!`](@ref), [`spinsph_eth`](@ref),
-[`sph_mode`](@ref)
+See also: [`spinsph_eth`](@ref), [`spinsph_mode`](@ref)
 """
 function spinsph_ethbar(C::Array{Complex{Float64},2}, s::Int)
-    return spinsph_ethbar!(copy(C), s)
+    # return spinsph_ethbar!(copy(C), s)
+
+    N, M = size(C)
+    @assert M > 0 && N > 0
+    @assert M == 2 * N - 1
+    lmax = N - 1
+    mmax = M ÷ 2
+
+    ð̄C = zero(C)
+    for l in max(abs(s - 1), abs(s)):(lmax + mmax), m in (-l):l
+        if l - lmax ≤ abs(m) ≤ mmax
+            sgn = m ≥ 0 ? 1 : -1
+            ð̄C[spinsph_mode(s - 1, l, m)] = -sgn *
+                                             sqrt((l + s) * (l - s + 1)) *
+                                             C[spinsph_mode(s, l, m)]
+        end
+    end
+
+    return ð̄C
 end
