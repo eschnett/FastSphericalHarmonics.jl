@@ -53,6 +53,26 @@ end
     @test F′ ≈ F
 end
 
+@testset "Scalar spherical harmonics: simple modes for $T" for T in [Float64,
+                                                                Complex{Float64}]
+    lmax = 10
+
+    N = lmax + 1
+    Θ, Φ = sph_points(N)
+    @test length(Θ) == N
+    M = length(Φ)
+
+    lmax_test = 4
+    for l in 0:lmax_test, m in (-l):l
+        F = T[Ylm(l, m, θ, ϕ) for θ in Θ, ϕ in Φ]
+        C = sph_transform(F)
+        @test C[sph_mode(l, m)] ≈ 1
+        @test sum(abs2.(C)) ≈ 1
+        F′ = sph_evaluate(C)
+        @test F′ ≈ F
+    end
+end
+
 @testset "Scalar spherical harmonics: linearity for $T" for T in [Float64,
                                                              Complex{Float64}]
     lmax = 100

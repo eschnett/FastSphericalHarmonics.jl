@@ -8,6 +8,19 @@
         mode_seen[spinsph_mode(s, l, m)] += 1
     end
     @test mode_seen == spinsphones(Bool, N, M, s)
+
+    # Test some concrete modes
+    @test spinsph_mode(0, 0, 0) == CartesianIndex(1, 1)
+    @test spinsph_mode(0, 1, -1) == CartesianIndex(1, 2)
+    @test spinsph_mode(0, 1, 1) == CartesianIndex(1, 3)
+
+    @test spinsph_mode(1, 1, 0) == CartesianIndex(1, 1)
+    @test spinsph_mode(1, 1, -1) == CartesianIndex(1, 2)
+    @test spinsph_mode(1, 1, 1) == CartesianIndex(1, 3)
+
+    @test spinsph_mode(2, 2, 0) == CartesianIndex(1, 1)
+    @test spinsph_mode(2, 2, -1) == CartesianIndex(1, 2)
+    @test spinsph_mode(2, 2, 1) == CartesianIndex(1, 3)
 end
 
 @testset "Spin spherical harmonics: simple modes ($T)" for T in
@@ -28,6 +41,32 @@ end
     @test sum(abs2.(C)) ≈ 1
     F′ = spinsph_evaluate(C, s)
     @test F′ ≈ F
+end
+
+@testset "Spin spherical harmonics: simple modes (s=$s, $T)" for s in -2:2,
+                                                                 T in
+                                                                 [Complex{Float64}]
+
+    lmax = 10
+
+    N = lmax + 1
+    Θ, Φ = sph_points(N)
+    @test length(Θ) == N
+    M = length(Φ)
+
+    lmax_test = 4
+    for l in abs(s):lmax_test, m in (-l):l
+        F = T[sYlm(s, l, m, θ, ϕ) for θ in Θ, ϕ in Φ]
+        C = spinsph_transform(F, s)
+        if s ≠ 0 && abs(m) == 1
+            @test_broken C[spinsph_mode(s, l, m)] ≈ 1
+        else
+            @test C[spinsph_mode(s, l, m)] ≈ 1
+        end
+        @test sum(abs2.(C)) ≈ 1
+        F′ = spinsph_evaluate(C, s)
+        @test F′ ≈ F
+    end
 end
 
 @testset "Spin spherical harmonics: linearity (s=$s, $T)" for s in -2:2,

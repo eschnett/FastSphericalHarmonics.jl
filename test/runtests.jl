@@ -1,9 +1,64 @@
 using FastTransforms
 using FastSphericalHarmonics
+using SpecialFunctions
 using Test
+
+bitsign(b::Bool) = b ? -1 : 1
+bitsign(n::Integer) = bitsign(isodd(n))
 
 chop(x) = abs2(x) < 100eps(x) ? zero(x) : x
 chop(x::Complex) = Complex(chop(real(x)), chop(imag(x)))
+
+# [Generalized binomial coefficient](https://en.wikipedia.org/wiki/Binomial_coefficient#Generalization_and_connection_to_the_binomial_series)
+function Base.binomial(α::Number, k::Integer)
+    k == 0 && return one(α)
+    return prod((α - i) / (k - i) for i in 0:(k - 1))
+end
+
+# [Jacobi
+# Polynomials](https://en.wikipedia.org/wiki/Jacobi_polynomials)
+function JacobiP(α, β, n, z)
+    return gamma(α + n + 1) / (factorial(n) * gamma(α + β + n + 1)) *
+           sum(binomial(n, m) * gamma(α + β + n + m + 1) / gamma(α + m + 1) *
+               ((z - 1) / 2)^m for m in 0:n)
+end
+
+# [Associated Legendre
+# Polynomials](https://en.wikipedia.org/wiki/Associated_Legendre_polynomials)
+function LegendreP(l, m, x)
+    return bitsign(m) *
+           2^l *
+           sqrt(1 - x^2)^m *
+           sum(factorial(k) / factorial(k - m) *
+               x^(k - m) *
+               binomial(l, k) *
+               binomial((l + k - 1) / 2, l) for k in m:l)
+end
+
+# [Spherical
+# harmonics](https://mikaelslevinsky.github.io/FastTransforms/transforms.html)
+# (section "sph2fourier")
+function Ylm(l, m, θ, ϕ)
+    return bitsign(abs(m)) *
+           sqrt((l + 1 / 2) * factorial(l - abs(m)) / factorial(l + abs(m))) *
+           LegendreP(l, abs(m), cos(θ)) *
+           sqrt((2 - (m == 0)) / 2π) *
+           (m ≥ 0 ? cos(abs(m) * ϕ) : sin(abs(m) * ϕ))
+end
+
+# [Spin-weighted spherical
+# harmonics](https://mikaelslevinsky.github.io/FastTransforms/transforms.html)
+# (section "spinsph2fourier")
+function sYlm(s, l, m, θ, ϕ)
+    l0 = max(abs(m), abs(s))
+    l1 = min(abs(m), abs(s))
+    return cis(m * ϕ) / sqrt(2π) *
+           sqrt((l + 1 / 2) * factorial(l + l0) * factorial(l - l0) /
+                (factorial(l + l1) * factorial(l - l1))) *
+           sin(θ / 2)^abs(m + s) *
+           cos(θ / 2)^abs(m - s) *
+           JacobiP(abs(m + s), abs(m - s), l - l0, cos(θ))
+end
 
 # Real spherical harmonics
 Y_0_0(θ, ϕ) = sqrt(1 / 4π)
@@ -12,16 +67,29 @@ Y_1_0(θ, ϕ) = sqrt(3 / 4π) * cos(θ)
 Y_1p1(θ, ϕ) = sqrt(3 / 4π) * sin(θ) * cos(ϕ)
 Y_1m1(θ, ϕ) = sqrt(3 / 4π) * sin(θ) * sin(ϕ)
 
-# Y_2_0(θ, ϕ) = sqrt(5 / 64π) * (3 * cos(2θ) - 1)
-# Y_2p1(θ, ϕ) = sqrt(15 / 16π) * sin(2θ) * cos(ϕ)
-# Y_2p2(θ, ϕ) = sqrt(15 / 64π) * (-cos(2θ) + 1) * cos(2ϕ)
-# 
-# Y_3_0(θ, ϕ) = sqrt(7 / 16π) * (5 * cos(θ)^3 - 3 * cos(θ))
-# Y_3p1(θ, ϕ) = sqrt(21 / 64π) * (5 * cos(θ)^2 - 1) * sin(θ)
-
 # Complex spin-weighted spherical harmonics
 
-Y_s1_1_0(θ, ϕ) = sqrt(3 / 8π) * sin(θ)
+# sYlm[s_, l_, m_, q_, f_] = 
+#  Module[{l0 = Max[Abs[m], Abs[s]], l1 = Min[Abs[m], Abs[s]]}, 
+#      (Exp[I*m*f]/Sqrt[2*Pi])*
+#    Sqrt[(l + 1/2)*(l + l0)!*((l - l0)!/((l + l1)!*(l - l1)!))]*
+#        Sin[q/2]^Abs[m + s]*Cos[q/2]^Abs[m - s]*
+#    JacobiP[l - l0, Abs[m + s], Abs[m - s], 
+#          Cos[q]]]
+
+Y_s0_0_0(θ, ϕ) = 1 / (2 * sqrt(π))
+
+Y_s0_1_0(θ, ϕ) = 1 / 2 * sqrt(3 / π) * cos(θ)
+Y_s0_1p1(θ, ϕ) = cis(ϕ) * sqrt(3 / (2 * π)) * cos(θ / 2) * sin(θ / 2)
+Y_s0_1p1(θ, ϕ) = cis(-f) * sqrt(3 / (2 * π)) * cos(θ / 2) * sin(θ / 2)
+
+Y_s1_1_0(θ, ϕ) = sqrt(3 / (2 * π)) * cos(θ / 2) * sin(θ / 2)
+Y_s1_1p1(θ, ϕ) = 1 / 2 * cis(f) * sqrt(3 / π) * sin(θ / 2)^2
+Y_s1_1m1(θ, ϕ) = 1 / 2 * cis(-f) * sqrt(3 / π) * cos(θ / 2)^2
+
+Y_s1_2_0(θ, ϕ) = sqrt(15 / (2 * π)) * cos(θ / 2) * cos(θ) * sin(θ / 2)
+Y_s1_2p1(θ, ϕ) = 1 / 4 * cis(f) * sqrt(5 / π) * (2 + 4 * cos(θ)) * sin(θ / 2)^2
+Y_s1_2p2(θ, ϕ) = cis(2 * f) * sqrt(5 / π) * cos(θ / 2) * sin(θ / 2)^3
 
 # # Real gradient spherical harmonics
 # # [∂θ, 1/sin(θ) ∂ϕ]
@@ -81,6 +149,7 @@ end
 
 ################################################################################
 
+include("test_fasttransforms.jl")
 include("test_points.jl")
 include("test_scalar.jl")
 # include("test_vector.jl")
