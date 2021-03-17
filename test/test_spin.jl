@@ -58,11 +58,7 @@ end
     for l in abs(s):lmax_test, m in (-l):l
         F = T[sYlm(s, l, m, θ, ϕ) for θ in Θ, ϕ in Φ]
         C = spinsph_transform(F, s)
-        if s ≠ 0 && abs(m) == 1
-            @test_broken C[spinsph_mode(s, l, m)] ≈ 1
-        else
-            @test C[spinsph_mode(s, l, m)] ≈ 1
-        end
+        @test C[spinsph_mode(s, l, m)] ≈ 1
         @test sum(abs2.(C)) ≈ 1
         F′ = spinsph_evaluate(C, s)
         @test F′ ≈ F
@@ -152,11 +148,7 @@ end
             F′ = spinsph_evaluate(C′, s)
             int = integrate(F, F′)
             δ = l == l′ && m == m′
-            if s ≠ 0 && m == m′ && abs(m) == 1 && δ == 0
-                @test_broken isapprox(int, δ; atol=atol)
-            else
-                @test isapprox(int, δ; atol=atol)
-            end
+            @test isapprox(int, δ; atol=atol)
         end
     end
 end

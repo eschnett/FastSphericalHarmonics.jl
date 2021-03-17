@@ -26,5 +26,5 @@ using Test
     C = P \ (PA * F)
 
     # Should be zero
-    @test_broken abs(C[1, 1]) < 10eps()
+    @test abs(C[1, 1]) < 10eps()
 end
