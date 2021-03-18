@@ -340,7 +340,7 @@ This function `ð̄ðF⁰` is the Laplacian of our original function `F`
 above. It is complex, but since we started with a real function `F`,
 `ð̄ðF⁰` has a zero imaginay part (up to round-off):
 ```Julia
-julia> maximum(imag.(ð̄ðF⁰))
+julia> maximum(abs.(imag.(ð̄ðF⁰)))
 1.1102230246251565e-16
 ```
 
