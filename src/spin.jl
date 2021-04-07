@@ -27,6 +27,36 @@ end
 
 ################################################################################
 
+function coeff_complex2real(C::Array{Complex{Float64},2}, s::Int)
+    @assert s == 0
+    C′ = similar(C, Float64)
+    C′[:, 1] = real.(C[:, 1])
+    for col in 2:2:size(C′, 2)
+        for row in 1:size(C′, 1)
+            avg = (C[row, col] + conj(C[row, col + 1])) / sqrt(2)
+            C′[row, col] = imag(avg)
+            C′[row, col + 1] = real(avg)
+        end
+    end
+    return C′
+end
+
+function coeff_real2complex(C::Array{Float64,2}, s::Int)
+    @assert s == 0
+    C′ = similar(C, Complex{Float64})
+    C′[:, 1] = C[:, 1]
+    for col in 2:2:size(C, 2)
+        for row in 1:size(C, 1)
+            val = Complex{Float64}(C[row, col + 1], C[row, col]) / sqrt(2)
+            C′[row, col] = val
+            C′[row, col + 1] = conj(val)
+        end
+    end
+    return C′
+end
+
+################################################################################
+
 export spinsph_transform!
 """
     spinsph_transform!(F::Array{Complex{Float64},2}, s::Int)
@@ -77,6 +107,19 @@ See also: [`spinsph_transform!`](@ref), [`spinsph_evaluate`](@ref),
 """
 function spinsph_transform(F::Array{Complex{Float64},2}, s::Int)
     return spinsph_transform!(copy(F), s)
+end
+# julia> "\U0925"
+# "थ"
+# julia> "\U0945"
+# "ॅ"
+# sYl+m = X (cos m phi + i sin m phi)
+# sYl-m = X (cos m phi - i sin m phi)
+# 
+function spinsph_transform(F::Array{Float64,2}, s::Int)
+    F′ = Complex{Float64}.(F)
+    C′ = spinsph_transform(F′, s)
+    C = coeff_complex2real(C′, s)
+    return C
 end
 
 ################################################################################
@@ -133,6 +176,12 @@ See also: [`spinsph_evaluate!`](@ref), [`spinsph_transform`](@ref),
 function spinsph_evaluate(C::Array{Complex{Float64},2}, s::Int)
     return spinsph_evaluate!(copy(C), s)
 end
+function spinsph_evaluate(C::Array{Float64,2}, s::Int)
+    C′ = coeff_real2complex(C, s)
+    F′ = spinsph_evaluate(C′, s)
+    F = real.(F′)
+    return F
+end
 
 ################################################################################
 
@@ -174,6 +223,21 @@ function spinsph_eth(C::Array{Complex{Float64},2}, s::Int)
 
     return ðC
 end
+function spinsph_eth(C::Array{Float64,2}, s::Int)
+    C′ = coeff_real2complex(C, s)
+    ðC′ = spinsph_eth(C′, s)
+    Cθ = real.(ðC′)
+    Cϕ = imag.(ðC′)
+    return Cθ, Cϕ
+end
+function spinsph_eth(Cθ::Array{Float64,2}, Cϕ::Array{Float64,2}, s::Int)
+    C′ = Complex{Float64}.(Cθ, Cϕ)
+    ðC′ = spinsph_eth(C′, s)
+    ðC = coeff_complex2real(ðC′, s + 1)
+    return ðC
+end
+export spinsph_grad
+spinsph_grad(C::Array{Float64,2}, s::Int) = spinsph_eth(C, s)
 
 ################################################################################
 
@@ -214,4 +278,21 @@ function spinsph_ethbar(C::Array{Complex{Float64},2}, s::Int)
     end
 
     return ð̄C
+end
+function spinsph_ethbar(C::Array{Float64,2}, s::Int)
+    C′ = coeff_real2complex(C, s)
+    ð̄C′ = spinsph_ethbar(C′, s)
+    Cθ = real.(ð̄C′)
+    Cϕ = imag.(ð̄C′)
+    return Cθ, Cϕ
+end
+function spinsph_ethbar(Cθ::Array{Float64,2}, Cϕ::Array{Float64,2}, s::Int)
+    C′ = Complex{Float64}.(Cθ, Cϕ)
+    ð̄C′ = spinsph_ethbar(C′, s)
+    ð̄C = coeff_complex2real(ð̄C′, s - 1)
+    return ð̄C
+end
+export spinsph_div
+function spinsph_div(Cθ::Array{Float64,2}, Cϕ::Array{Float64,2}, s::Int)
+    return spinsph_ethbar(Cθ, Cϕ, s)
 end

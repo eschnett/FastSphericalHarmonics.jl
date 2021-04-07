@@ -44,8 +44,10 @@ end
 end
 
 @testset "Spin spherical harmonics: simple modes (s=$s, $T)" for s in -2:2,
-                                                                 T in
-                                                                 [Complex{Float64}]
+                                                                 T in [Float64,
+                                                                  Complex{Float64}]
+
+    T <: Real && s ≠ 0 && continue
 
     lmax = 10
 
@@ -56,7 +58,7 @@ end
 
     lmax_test = 4
     for l in abs(s):lmax_test, m in (-l):l
-        F = T[sYlm(s, l, m, θ, ϕ) for θ in Θ, ϕ in Φ]
+        F = T[sYlm(T, s, l, m, θ, ϕ) for θ in Θ, ϕ in Φ]
         C = spinsph_transform(F, s)
         @test C[spinsph_mode(s, l, m)] ≈ 1
         @test sum(abs2.(C)) ≈ 1
@@ -66,8 +68,10 @@ end
 end
 
 @testset "Spin spherical harmonics: linearity (s=$s, $T)" for s in -2:2,
-                                                              T in
-                                                              [Complex{Float64}]
+                                                              T in [Float64,
+                                                               Complex{Float64}]
+
+    T <: Real && s ≠ 0 && continue
 
     lmax = 100
 
@@ -99,8 +103,10 @@ end
 end
 
 @testset "Spin spherical harmonics: duality (s=$s, $T)" for s in -2:2,
-                                                            T in
-                                                            [Complex{Float64}]
+                                                            T in [Float64,
+                                                             Complex{Float64}]
+
+    T <: Real && s ≠ 0 && continue
 
     lmax = 100
 
@@ -124,10 +130,12 @@ end
     @test C′ ≈ C
 end
 
-# This fails for s≠0, m=m′∈[-1,1], δ=0
 @testset "Spin spherical harmonics: orthonormality (s=$s, $T)" for s in -2:2,
                                                                    T in
-                                                                   [Complex{Float64}]
+                                                                   [Float64,
+                                                                    Complex{Float64}]
+
+    T <: Real && s ≠ 0 && continue
 
     lmax = 100
     atol = 4 / lmax^2
@@ -171,14 +179,44 @@ end
     # Calculate Laplacian via eth and ethbar
     F⁰ = T.(F)
     C⁰ = spinsph_transform(F⁰, 0)
+    @test eltype(C⁰) === T
     ðC¹ = spinsph_eth(C⁰, 0)
+    @test eltype(ðC¹) === T
     ð̄ðC⁰ = spinsph_ethbar(ðC¹, 1)
+    @test eltype(ð̄ðC⁰) === T
     ð̄ðF⁰ = spinsph_evaluate(ð̄ðC⁰, 0)
+    @test eltype(ð̄ðF⁰) === T
     @test ð̄ðF⁰ ≈ ΔF
 
     # Calculate Laplacian via ethbar and eth
     ð̄C⁻¹ = spinsph_ethbar(C⁰, 0)
+    @test eltype(ð̄C⁻¹) === T
     ðð̄C⁰ = spinsph_eth(ð̄C⁻¹, -1)
+    @test eltype(ðð̄C⁰) === T
     ðð̄F⁰ = spinsph_evaluate(ðð̄C⁰, 0)
+    @test eltype(ð̄ðF⁰) === T
+    @test ðð̄F⁰ ≈ ΔF
+
+    # Calculate Laplacian via real eth and ethbar
+    F⁰ = F
+    C⁰ = spinsph_transform(F⁰, 0)
+    @test eltype(C⁰) === RT
+    ðC¹θ, ðC¹ϕ = spinsph_eth(C⁰, 0)
+    @test eltype(ðC¹θ) === RT
+    @test eltype(ðC¹ϕ) === RT
+    ð̄ðC⁰ = spinsph_ethbar(ðC¹θ, ðC¹ϕ, 1)
+    @test eltype(ð̄ðC⁰) === RT
+    ð̄ðF⁰ = spinsph_evaluate(ð̄ðC⁰, 0)
+    @test eltype(ð̄ðF⁰) === RT
+    @test ð̄ðF⁰ ≈ ΔF
+
+    # Calculate Laplacian via real ethbar and eth
+    ð̄C⁻¹θ, ð̄C⁻¹ϕ = spinsph_ethbar(C⁰, 0)
+    @test eltype(ð̄C⁻¹θ) === RT
+    @test eltype(ð̄C⁻¹ϕ) === RT
+    ðð̄C⁰ = spinsph_eth(ð̄C⁻¹θ, ð̄C⁻¹ϕ, -1)
+    @test eltype(ðð̄C⁰) === RT
+    ðð̄F⁰ = spinsph_evaluate(ðð̄C⁰, 0)
+    @test eltype(ð̄ðF⁰) === RT
     @test ðð̄F⁰ ≈ ΔF
 end

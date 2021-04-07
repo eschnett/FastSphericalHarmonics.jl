@@ -59,6 +59,17 @@ function sYlm(s, l, m, θ, ϕ)
            cos(θ / 2)^abs(m - s) *
            JacobiP(abs(m + s), abs(m - s), l - l0, cos(θ))
 end
+sYlm(::Type{<:Complex}, s, l, m, θ, ϕ) = sYlm(s, l, m, θ, ϕ)
+function sYlm(::Type{<:Real}, s, l, m, θ, ϕ)
+    @assert s == 0
+    if m == 0
+        return real(sYlm(s, l, abs(m), θ, ϕ))
+    elseif m > 0
+        return sqrt(2) * real(sYlm(s, l, abs(m), θ, ϕ))
+    else
+        return sqrt(2) * imag(sYlm(s, l, abs(m), θ, ϕ))
+    end
+end
 
 # Real spherical harmonics
 Y_0_0(θ, ϕ) = sqrt(1 / 4π)
