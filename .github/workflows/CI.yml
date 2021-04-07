@@ -10,24 +10,26 @@ jobs:
       matrix:
         # arch: [x64, x86]
         # os: [ubuntu-latest, windows-latest, macOS-latest]
-        # version: ["1.4", "1.5", "nightly"]
+        # version: ["1.4", "1.5", "1.6", "nightly"]
         include:
           - arch: "x64"
             os: "ubuntu-latest"
-            version: "1.5"
+            version: "1.6"
           - arch: "x64"
             os: "windows-latest"
-            version: "1.5"
+            version: "1.6"
           - arch: "x64"
             os: "macOS-latest"
-            version: "1.5"
+            version: "1.6"
           - arch: "x86"
             os: "ubuntu-latest"
+            version: "1.6"
+          - arch: "x64"
+            os: "ubuntu-latest"
+            version: "nightly"
+          - arch: "x64"
+            os: "ubuntu-latest"
             version: "1.5"
-          # Nightly cannot handle Manifest.toml written by 1.5
-          # - arch: "x64"
-          #   os: "ubuntu-latest"
-          #   version: "nightly"
           - arch: "x64"
             os: "ubuntu-latest"
             version: "1.4"
