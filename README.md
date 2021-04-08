@@ -14,7 +14,7 @@ package wraps the
 [`FastTransforms.jl`](https://github.com/JuliaApproximation/FastTransforms.jl)
 Julia package to calculate spherical harmonics.
 
-`FastSphericalHarmonics.jl` is a powerful, efficient, and well thought
+`FastTransforms.jl` is a powerful, efficient, and well thought
 out package. Unfortunately, its user interface is difficult to use for
 beginners, and its documentation is very technical.
 `FastSphericalHarmonics.jl` provides functions and documentation that
