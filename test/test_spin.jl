@@ -197,26 +197,31 @@ end
     @test eltype(ð̄ðF⁰) === T
     @test ðð̄F⁰ ≈ ΔF
 
-    # Calculate Laplacian via real eth and ethbar
+    # Calculate Laplacian via real-valued grad and div (eth and
+    # ethbar)
     F⁰ = F
+    @test eltype(F⁰) === RT
     C⁰ = spinsph_transform(F⁰, 0)
     @test eltype(C⁰) === RT
-    ðC¹θ, ðC¹ϕ = spinsph_eth(C⁰, 0)
-    @test eltype(ðC¹θ) === RT
-    @test eltype(ðC¹ϕ) === RT
-    ð̄ðC⁰ = spinsph_ethbar(ðC¹θ, ðC¹ϕ, 1)
+    ðC¹ = spinsph_grad(C⁰, 0)
+    @test eltype(ðC¹) === T
+    ð̄ðC⁰ = spinsph_div(ðC¹, 1)
     @test eltype(ð̄ðC⁰) === RT
     ð̄ðF⁰ = spinsph_evaluate(ð̄ðC⁰, 0)
     @test eltype(ð̄ðF⁰) === RT
     @test ð̄ðF⁰ ≈ ΔF
 
-    # Calculate Laplacian via real ethbar and eth
-    ð̄C⁻¹θ, ð̄C⁻¹ϕ = spinsph_ethbar(C⁰, 0)
-    @test eltype(ð̄C⁻¹θ) === RT
-    @test eltype(ð̄C⁻¹ϕ) === RT
-    ðð̄C⁰ = spinsph_eth(ð̄C⁻¹θ, ð̄C⁻¹ϕ, -1)
+    # Calculate Laplacian via real-valued gradbar and divbar (ethbar
+    # and eth)
+    F⁰ = F
+    @test eltype(F⁰) === RT
+    C⁰ = spinsph_transform(F⁰, 0)
+    @test eltype(C⁰) === RT
+    ð̄C¹ = spinsph_gradbar(C⁰, 0)
+    @test eltype(ð̄C¹) === T
+    ðð̄C⁰ = spinsph_divbar(ð̄C¹, -1)
     @test eltype(ðð̄C⁰) === RT
     ðð̄F⁰ = spinsph_evaluate(ðð̄C⁰, 0)
-    @test eltype(ð̄ðF⁰) === RT
+    @test eltype(ðð̄F⁰) === RT
     @test ðð̄F⁰ ≈ ΔF
 end

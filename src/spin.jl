@@ -203,8 +203,6 @@ coefficient array for a particular `l`,`m` mode with spin weight `s`.
 See also: [`spinsph_ethbar`](@ref), [`spinsph_mode`](@ref)
 """
 function spinsph_eth(C::Array{Complex{Float64},2}, s::Int)
-    # spinsph_eth!(copy(C), s)
-
     N, M = size(C)
     @assert M > 0 && N > 0
     @assert M == 2 * N - 1
@@ -223,21 +221,20 @@ function spinsph_eth(C::Array{Complex{Float64},2}, s::Int)
 
     return ðC
 end
-function spinsph_eth(C::Array{Float64,2}, s::Int)
+
+export spinsph_grad
+function spinsph_grad(C::Array{Float64,2}, s::Int)
     C′ = coeff_real2complex(C, s)
-    ðC′ = spinsph_eth(C′, s)
-    Cθ = real.(ðC′)
-    Cϕ = imag.(ðC′)
-    return Cθ, Cϕ
-end
-function spinsph_eth(Cθ::Array{Float64,2}, Cϕ::Array{Float64,2}, s::Int)
-    C′ = Complex{Float64}.(Cθ, Cϕ)
-    ðC′ = spinsph_eth(C′, s)
-    ðC = coeff_complex2real(ðC′, s + 1)
+    ðC = spinsph_eth(C′, s)
     return ðC
 end
-export spinsph_grad
-spinsph_grad(C::Array{Float64,2}, s::Int) = spinsph_eth(C, s)
+
+export spinsph_divbar
+function spinsph_divbar(C::Array{Complex{Float64},2}, s::Int)
+    ð̄̄C′ = spinsph_eth(C, s)
+    ð̄̄C = coeff_complex2real(ð̄̄C′, s + 1)
+    return ð̄̄C
+end
 
 ################################################################################
 
@@ -259,8 +256,6 @@ coefficient array for a particular `l`,`m` mode with spin weight `s`.
 See also: [`spinsph_eth`](@ref), [`spinsph_mode`](@ref)
 """
 function spinsph_ethbar(C::Array{Complex{Float64},2}, s::Int)
-    # return spinsph_ethbar!(copy(C), s)
-
     N, M = size(C)
     @assert M > 0 && N > 0
     @assert M == 2 * N - 1
@@ -279,20 +274,17 @@ function spinsph_ethbar(C::Array{Complex{Float64},2}, s::Int)
 
     return ð̄C
 end
-function spinsph_ethbar(C::Array{Float64,2}, s::Int)
+
+export spinsph_gradbar
+function spinsph_gradbar(C::Array{Float64,2}, s::Int)
     C′ = coeff_real2complex(C, s)
-    ð̄C′ = spinsph_ethbar(C′, s)
-    Cθ = real.(ð̄C′)
-    Cϕ = imag.(ð̄C′)
-    return Cθ, Cϕ
-end
-function spinsph_ethbar(Cθ::Array{Float64,2}, Cϕ::Array{Float64,2}, s::Int)
-    C′ = Complex{Float64}.(Cθ, Cϕ)
-    ð̄C′ = spinsph_ethbar(C′, s)
-    ð̄C = coeff_complex2real(ð̄C′, s - 1)
+    ð̄C = spinsph_ethbar(C′, s)
     return ð̄C
 end
+
 export spinsph_div
-function spinsph_div(Cθ::Array{Float64,2}, Cϕ::Array{Float64,2}, s::Int)
-    return spinsph_ethbar(Cθ, Cϕ, s)
+function spinsph_div(C::Array{Complex{Float64},2}, s::Int)
+    ð̄C′ = spinsph_ethbar(C, s)
+    ð̄C = coeff_complex2real(ð̄C′, s - 1)
+    return ð̄C
 end
