@@ -58,7 +58,7 @@ end
 
 export sph_transform
 """
-    C = sph_transform(F::Array{T,2}) where {T<:SpHTypes}
+    C = sph_transform(F::AbstractArray{T,2}) where {T<:SpHTypes}
     C::Array{T,2}
 
 Transform an array of points `F` into spherical harmonics. You can use
@@ -74,7 +74,7 @@ coefficient array for a particular `l`,`m` mode.
 See also: [`sph_transform!`](@ref), [`sph_evaluate`](@ref),
 [`sph_points`](@ref), [`sph_mode`](@ref)
 """
-sph_transform(F::Array{T,2}) where {T<:SpHTypes} = sph_transform!(copy(F))
+sph_transform(F::AbstractArray{T,2}) where {T<:SpHTypes} = sph_transform!(Array(F))
 
 ################################################################################
 
@@ -110,7 +110,7 @@ end
 
 export sph_evaluate
 """
-    F = sph_evaluate(C::Array{T,2}) where {T<:SpHTypes}
+    F = sph_evaluate(C::AbstractArray{T,2}) where {T<:SpHTypes}
     F::Array{T,2}
 
 Evaluate an array of coefficients `C` on the grid points on a sphere.
@@ -126,7 +126,7 @@ sphere in the output array `F`.
 See also: [`sph_evaluate!`](@ref), [`sph_transform`](@ref),
 [`sph_mode`](@ref), [`sph_points`](@ref)
 """
-sph_evaluate(C::Array{T,2}) where {T<:SpHTypes} = sph_evaluate!(copy(C))
+sph_evaluate(C::Array{T,2}) where {T<:SpHTypes} = sph_evaluate!(Array(C))
 
 ################################################################################
 
@@ -157,7 +157,7 @@ end
 
 export sph_laplace
 """
-    ΔC = sph_laplace(C::Array{T,2}) where {T<:SpHTypes}
+    ΔC = sph_laplace(C::AbstractArray{T,2}) where {T<:SpHTypes}
     ΔC::Array{T,2}
 
 Calculate the Laplacian of a set of coefficients `C`. You can use
@@ -167,4 +167,4 @@ overwrites its argument `C`.
 See also: [`sph_transform`](@ref), [`sph_evaluate`](@ref),
 [`sph_laplace!`](@ref)
 """
-sph_laplace(C::Array{T,2}) where {T<:SpHTypes} = sph_laplace!(copy(C))
+sph_laplace(C::AbstractArray{T,2}) where {T<:SpHTypes} = sph_laplace!(Array(C))

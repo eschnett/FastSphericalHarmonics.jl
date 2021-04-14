@@ -27,9 +27,9 @@ end
 
 ################################################################################
 
-function coeff_complex2real(C::Array{Complex{Float64},2}, s::Int)
+function coeff_complex2real(C::AbstractArray{Complex{Float64},2}, s::Int)
     @assert s == 0
-    C′ = similar(C, Float64)
+    C′ = Array{Float64}(undef, size(C))
     C′[:, 1] = real.(C[:, 1])
     for col in 2:2:size(C′, 2)
         for row in 1:size(C′, 1)
@@ -41,9 +41,9 @@ function coeff_complex2real(C::Array{Complex{Float64},2}, s::Int)
     return C′
 end
 
-function coeff_real2complex(C::Array{Float64,2}, s::Int)
+function coeff_real2complex(C::AbstractArray{Float64,2}, s::Int)
     @assert s == 0
-    C′ = similar(C, Complex{Float64})
+    C′ = Array{Complex{Float64}}(undef, size(C))
     C′[:, 1] = C[:, 1]
     for col in 2:2:size(C, 2)
         for row in 1:size(C, 1)
@@ -89,7 +89,7 @@ end
 
 export spinsph_transform
 """
-    C = spinsph_transform!(F::Array{Complex{Float64},2}, s::Int)
+    C = spinsph_transform(F::AbstractArray{Complex{Float64},2}, s::Int)
     C::Array{Complex{Float64},2}
 
 Calculate the spin spherical harmonic transformation with spin weight
@@ -105,18 +105,11 @@ coefficient array for a particular `l`,`m` mode with spin weight `s`.
 See also: [`spinsph_transform!`](@ref), [`spinsph_evaluate`](@ref),
 [`sph_points`](@ref), [`spinsph_mode`](@ref)
 """
-function spinsph_transform(F::Array{Complex{Float64},2}, s::Int)
-    return spinsph_transform!(copy(F), s)
+function spinsph_transform(F::AbstractArray{Complex{Float64},2}, s::Int)
+    return spinsph_transform!(Array(F), s)
 end
-# julia> "\U0925"
-# "थ"
-# julia> "\U0945"
-# "ॅ"
-# sYl+m = X (cos m phi + i sin m phi)
-# sYl-m = X (cos m phi - i sin m phi)
-# 
-function spinsph_transform(F::Array{Float64,2}, s::Int)
-    F′ = Complex{Float64}.(F)
+function spinsph_transform(F::AbstractArray{Float64,2}, s::Int)
+    F′ = Array{Complex{Float64}}(F)
     C′ = spinsph_transform(F′, s)
     C = coeff_complex2real(C′, s)
     return C
@@ -156,7 +149,7 @@ end
 
 export spinsph_evaluate
 """
-    F = spinsph_evaluate(C::Array{Complex{Float64},2}, s::Int)
+    F = spinsph_evaluate(C::AbstractArray{Complex{Float64},2}, s::Int)
     F::Array{Complex{Float64},2}
 
 Evaluate the spin spherical harmonic transformation with spin weight
@@ -173,10 +166,10 @@ sphere in the output array `F`.
 See also: [`spinsph_evaluate!`](@ref), [`spinsph_transform`](@ref),
 [`spinsph_mode`](@ref), [`sph_points`](@ref)
 """
-function spinsph_evaluate(C::Array{Complex{Float64},2}, s::Int)
-    return spinsph_evaluate!(copy(C), s)
+function spinsph_evaluate(C::AbstractArray{Complex{Float64},2}, s::Int)
+    return spinsph_evaluate!(Array(C), s)
 end
-function spinsph_evaluate(C::Array{Float64,2}, s::Int)
+function spinsph_evaluate(C::AbstractArray{Float64,2}, s::Int)
     C′ = coeff_real2complex(C, s)
     F′ = spinsph_evaluate(C′, s)
     F = real.(F′)
@@ -187,7 +180,7 @@ end
 
 export spinsph_eth
 """
-    ðC = spinsph_eth(C::Array{Complex{Float64},2}, s::Int)
+    ðC = spinsph_eth(C::AbstractArray{Complex{Float64},2}, s::Int)
     ðC::Array{Complex{Float64},2}
 
 Apply the differential operator ð ("eth") to the coefficients `C`.
@@ -202,14 +195,14 @@ coefficient array for a particular `l`,`m` mode with spin weight `s`.
 
 See also: [`spinsph_ethbar`](@ref), [`spinsph_mode`](@ref)
 """
-function spinsph_eth(C::Array{Complex{Float64},2}, s::Int)
+function spinsph_eth(C::AbstractArray{Complex{Float64},2}, s::Int)
     N, M = size(C)
     @assert M > 0 && N > 0
     @assert M == 2 * N - 1
     lmax = N - 1
     mmax = M ÷ 2
 
-    ðC = zero(C)
+    ðC = zeros(Complex{Float64}, size(C))
     for l in max(abs(s + 1), abs(s)):(lmax + mmax), m in (-l):l
         if l - lmax ≤ abs(m) ≤ mmax
             sgn = m ≥ 0 ? 1 : -1
@@ -223,14 +216,14 @@ function spinsph_eth(C::Array{Complex{Float64},2}, s::Int)
 end
 
 export spinsph_grad
-function spinsph_grad(C::Array{Float64,2}, s::Int)
+function spinsph_grad(C::AbstractArray{Float64,2}, s::Int)
     C′ = coeff_real2complex(C, s)
     ðC = spinsph_eth(C′, s)
     return ðC
 end
 
 export spinsph_divbar
-function spinsph_divbar(C::Array{Complex{Float64},2}, s::Int)
+function spinsph_divbar(C::AbstractArray{Complex{Float64},2}, s::Int)
     ð̄̄C′ = spinsph_eth(C, s)
     ð̄̄C = coeff_complex2real(ð̄̄C′, s + 1)
     return ð̄̄C
@@ -240,7 +233,7 @@ end
 
 export spinsph_ethbar
 """
-    ðC = spinsph_ethbar(C::Array{Complex{Float64},2}, s::Int)
+    ðC = spinsph_ethbar(C::AbstractArray{Complex{Float64},2}, s::Int)
     ðC::Array{Complex{Float64},2}
 
 Apply the differential operator ð̄ ("eth-bar") to the coefficients `C`.
@@ -255,14 +248,14 @@ coefficient array for a particular `l`,`m` mode with spin weight `s`.
 
 See also: [`spinsph_eth`](@ref), [`spinsph_mode`](@ref)
 """
-function spinsph_ethbar(C::Array{Complex{Float64},2}, s::Int)
+function spinsph_ethbar(C::AbstractArray{Complex{Float64},2}, s::Int)
     N, M = size(C)
     @assert M > 0 && N > 0
     @assert M == 2 * N - 1
     lmax = N - 1
     mmax = M ÷ 2
 
-    ð̄C = zero(C)
+    ð̄C = zeros(Complex{Float64}, size(C))
     for l in max(abs(s - 1), abs(s)):(lmax + mmax), m in (-l):l
         if l - lmax ≤ abs(m) ≤ mmax
             sgn = m ≥ 0 ? 1 : -1
@@ -276,14 +269,14 @@ function spinsph_ethbar(C::Array{Complex{Float64},2}, s::Int)
 end
 
 export spinsph_gradbar
-function spinsph_gradbar(C::Array{Float64,2}, s::Int)
+function spinsph_gradbar(C::AbstractArray{Float64,2}, s::Int)
     C′ = coeff_real2complex(C, s)
     ð̄C = spinsph_ethbar(C′, s)
     return ð̄C
 end
 
 export spinsph_div
-function spinsph_div(C::Array{Complex{Float64},2}, s::Int)
+function spinsph_div(C::AbstractArray{Complex{Float64},2}, s::Int)
     ð̄C′ = spinsph_ethbar(C, s)
     ð̄C = coeff_complex2real(ð̄C′, s - 1)
     return ð̄C
