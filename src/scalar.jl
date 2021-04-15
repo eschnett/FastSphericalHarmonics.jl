@@ -74,7 +74,9 @@ coefficient array for a particular `l`,`m` mode.
 See also: [`sph_transform!`](@ref), [`sph_evaluate`](@ref),
 [`sph_points`](@ref), [`sph_mode`](@ref)
 """
-sph_transform(F::AbstractArray{T,2}) where {T<:SpHTypes} = sph_transform!(Array(F))
+function sph_transform(F::AbstractArray{T,2}) where {T<:SpHTypes}
+    return sph_transform!(Array(F))
+end
 
 ################################################################################
 

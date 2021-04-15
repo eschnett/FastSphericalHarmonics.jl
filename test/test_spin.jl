@@ -37,8 +37,7 @@ end
     F = T[Y_s1_1_0(θ, ϕ) for θ in Θ, ϕ in Φ]
     @test size(F) == (N, M)
     C = spinsph_transform(F, s)
-    @test C[spinsph_mode(s, l, m)] ≈ 1
-    @test sum(abs2.(C)) ≈ 1
+    @test C ≈ unit(spinsph_mode(s, l, m), size(C))
     F′ = spinsph_evaluate(C, s)
     @test F′ ≈ F
 end
@@ -60,8 +59,7 @@ end
     for l in abs(s):lmax_test, m in (-l):l
         F = T[sYlm(T, s, l, m, θ, ϕ) for θ in Θ, ϕ in Φ]
         C = spinsph_transform(F, s)
-        @test C[spinsph_mode(s, l, m)] ≈ 1
-        @test sum(abs2.(C)) ≈ 1
+        @test C ≈ unit(spinsph_mode(s, l, m), size(C))
         F′ = spinsph_evaluate(C, s)
         @test F′ ≈ F
     end
@@ -158,6 +156,52 @@ end
             δ = l == l′ && m == m′
             @test isapprox(int, δ; atol=atol)
         end
+    end
+end
+
+@testset "Spin spherical harmonics: eth and ethbar (s=$s, $T)" for s in -2:2,
+                                                                   T in
+                                                                   [Complex{Float64}]
+
+    RT = typeof(Real(one(T)))
+    lmax = 10
+
+    N = lmax + 1
+    Θ, Φ = sph_points(N)
+    @test length(Θ) == N
+    M = length(Φ)
+
+    lmax_test = 4
+
+    for l in max(abs(s), abs(s + 1)):lmax_test, m in (-l):l
+        F = T[ðsYlm(s, l, m, θ, ϕ) for θ in Θ, ϕ in Φ]
+        C = spinsph_transform(F, s + 1)
+        α = ifelse(m ≥ -s, 1, -1) * sqrt((l - s) * (l + s + 1))
+        @test C ≈ unit(α, spinsph_mode(s + 1, l, m), size(C))
+        F′ = spinsph_evaluate(C, s + 1)
+        @test F′ ≈ F
+    end
+
+    for l in max(abs(s), abs(s - 1)):lmax_test, m in (-l):l
+        F = T[ð̄sYlm(s, l, m, θ, ϕ) for θ in Θ, ϕ in Φ]
+        C = spinsph_transform(F, s - 1)
+        α = -ifelse(m > -s, 1, -1) * sqrt((l + s) * (l - s + 1))
+        @test C ≈ unit(α, spinsph_mode(s - 1, l, m), size(C))
+        F′ = spinsph_evaluate(C, s - 1)
+        @test F′ ≈ F
+    end
+
+    for l in abs(s):lmax_test, m in (-l):l
+        C = zeros(T, N, M)
+        C[spinsph_mode(s, l, m)] = 1
+
+        ðC = spinsph_eth(C, s)
+        ðF = spinsph_evaluate(ðC, s + 1)
+        @test ðF .+ 1 ≈ T[ðsYlm(s, l, m, θ, ϕ) for θ in Θ, ϕ in Φ] .+ 1
+
+        ð̄C = spinsph_ethbar(C, s)
+        ð̄F = spinsph_evaluate(ð̄C, s - 1)
+        @test ð̄F .+ 1 ≈ T[ð̄sYlm(s, l, m, θ, ϕ) for θ in Θ, ϕ in Φ] .+ 1
     end
 end
 

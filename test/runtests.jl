@@ -1,10 +1,23 @@
 using FastTransforms
 using FastSphericalHarmonics
+using ForwardDiff
 using SpecialFunctions
+using StaticArrays
 using Test
 
 bitsign(b::Bool) = b ? -1 : 1
 bitsign(n::Integer) = bitsign(isodd(n))
+
+function unit(val::T, ind::CartesianIndex{D}, size::NTuple{D,Int}) where {T,D}
+    return setindex!(zeros(T, size), val, ind)
+end
+function unit(::Type{T}, ind::CartesianIndex{D},
+              size::NTuple{D,Int}) where {T,D}
+    return unit(one(T), ind, size)
+end
+function unit(ind::CartesianIndex{D}, size::NTuple{D,Int}) where {D}
+    return unit(true, ind, size)
+end
 
 chop(x) = abs2(x) < 100eps(x) ? zero(x) : x
 chop(x::Complex) = Complex(chop(real(x)), chop(imag(x)))
@@ -69,6 +82,25 @@ function sYlm(::Type{<:Real}, s, l, m, θ, ϕ)
     else
         return sqrt(2) * imag(sYlm(s, l, abs(m), θ, ϕ))
     end
+end
+
+c2a(c) = SVector(real(c), imag(c))
+a2c(a) = Complex(a[1], a[2])
+
+function ∂θsYlm(s, l, m, θ, ϕ)
+    return a2c(ForwardDiff.derivative(θ -> c2a(sYlm(s, l, m, θ, ϕ)), θ))
+end
+function ∂ϕsYlm(s, l, m, θ, ϕ)
+    return a2c(ForwardDiff.derivative(ϕ -> c2a(sYlm(s, l, m, θ, ϕ)), ϕ))
+end
+
+function ðsYlm(s, l, m, θ, ϕ)
+    return (-(∂θsYlm(s, l, m, θ, ϕ) + im / sin(θ) * ∂ϕsYlm(s, l, m, θ, ϕ)) +
+            s * cos(θ) / sin(θ) * sYlm(s, l, m, θ, ϕ))
+end
+function ð̄sYlm(s, l, m, θ, ϕ)
+    return (-(∂θsYlm(s, l, m, θ, ϕ) - im / sin(θ) * ∂ϕsYlm(s, l, m, θ, ϕ)) -
+            s * cos(θ) / sin(θ) * sYlm(s, l, m, θ, ϕ))
 end
 
 # Real spherical harmonics

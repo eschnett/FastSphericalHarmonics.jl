@@ -22,8 +22,7 @@ end
     # Test l=0, m=0
     F = T[Y_0_0(θ, ϕ) for θ in Θ, ϕ in Φ]
     C = sph_transform(F)
-    @test C[sph_mode(0, 0)] ≈ 1
-    @test sum(abs2.(C)) ≈ 1
+    @test C ≈ unit(sph_mode(0, 0), size(C))
     F′ = sph_evaluate(C)
     @test F′ ≈ F
 
@@ -31,24 +30,21 @@ end
     F = T[Y_1_0(θ, ϕ) for θ in Θ, ϕ in Φ]
     @test size(F) == (N, M)
     C = sph_transform(F)
-    @test C[sph_mode(1, 0)] ≈ 1
-    @test sum(abs2.(C)) ≈ 1
+    @test C ≈ unit(sph_mode(1, 0), size(C))
     F′ = sph_evaluate(C)
     @test F′ ≈ F
 
     # Test l=1, m=1
     F = T[Y_1p1(θ, ϕ) for θ in Θ, ϕ in Φ]
     C = sph_transform(F)
-    @test C[sph_mode(1, 1)] ≈ 1
-    @test sum(abs2.(C)) ≈ 1
+    @test C ≈ unit(sph_mode(1, 1), size(C))
     F′ = sph_evaluate(C)
     @test F′ ≈ F
 
     # Test l=1, m=-1
     F = T[Y_1m1(θ, ϕ) for θ in Θ, ϕ in Φ]
     C = sph_transform(F)
-    @test C[sph_mode(1, -1)] ≈ 1
-    @test sum(abs2.(C)) ≈ 1
+    @test C ≈ unit(sph_mode(1, -1), size(C))
     F′ = sph_evaluate(C)
     @test F′ ≈ F
 end
@@ -66,8 +62,7 @@ end
     for l in 0:lmax_test, m in (-l):l
         F = T[Ylm(l, m, θ, ϕ) for θ in Θ, ϕ in Φ]
         C = sph_transform(F)
-        @test C[sph_mode(l, m)] ≈ 1
-        @test sum(abs2.(C)) ≈ 1
+        @test C ≈ unit(sph_mode(l, m), size(C))
         F′ = sph_evaluate(C)
         @test F′ ≈ F
     end
