@@ -193,11 +193,16 @@ end
 
     for l in abs(s):lmax_test, m in (-l):l
         C = zeros(T, N, M)
-        C[spinsph_mode(s, l, m)] = 1
+        C[spinsph_mode(s, l, m)] = ifelse(m ≥ -s, 1, -1)
 
         ðC = spinsph_eth(C, s)
         ðF = spinsph_evaluate(ðC, s + 1)
         @test ðF .+ 1 ≈ T[ðsYlm(s, l, m, θ, ϕ) for θ in Θ, ϕ in Φ] .+ 1
+    end
+
+    for l in abs(s):lmax_test, m in (-l):l
+        C = zeros(T, N, M)
+        C[spinsph_mode(s, l, m)] = ifelse(m > -s, 1, -1)
 
         ð̄C = spinsph_ethbar(C, s)
         ð̄F = spinsph_evaluate(ð̄C, s - 1)

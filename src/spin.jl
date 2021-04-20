@@ -205,8 +205,7 @@ function spinsph_eth(C::AbstractArray{Complex{Float64},2}, s::Int)
     ðC = zeros(Complex{Float64}, size(C))
     for l in max(abs(s + 1), abs(s)):(lmax + mmax), m in (-l):l
         if l - lmax ≤ abs(m) ≤ mmax
-            ðC[spinsph_mode(s + 1, l, m)] = ifelse(m ≥ -s, 1, -1) *
-                                            sqrt((l - s) * (l + s + 1)) *
+            ðC[spinsph_mode(s + 1, l, m)] = sqrt((l - s) * (l + s + 1)) *
                                             C[spinsph_mode(s, l, m)]
         end
     end
@@ -257,8 +256,7 @@ function spinsph_ethbar(C::AbstractArray{Complex{Float64},2}, s::Int)
     ð̄C = zeros(Complex{Float64}, size(C))
     for l in max(abs(s - 1), abs(s)):(lmax + mmax), m in (-l):l
         if l - lmax ≤ abs(m) ≤ mmax
-            ð̄C[spinsph_mode(s - 1, l, m)] = -ifelse(m > -s, 1, -1) *
-                                             sqrt((l + s) * (l - s + 1)) *
+            ð̄C[spinsph_mode(s - 1, l, m)] = -sqrt((l + s) * (l - s + 1)) *
                                              C[spinsph_mode(s, l, m)]
         end
     end
