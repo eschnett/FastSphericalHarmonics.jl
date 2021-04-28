@@ -55,6 +55,44 @@ function coeff_real2complex(C::AbstractArray{Float64,2}, s::Int)
     return C′
 end
 
+function coeff_complex2vector(C::AbstractArray{Complex{Float64},2}, s::Int)
+    @assert abs(s) == 1
+    C′ = Array{SVector{2,Float64}}(undef, size(C))
+
+    c2a(c) = SVector(real(c), imag(c))
+    for col in 1:size(C′, 2)
+        for row in 1:size(C′, 1)
+            c = C[row, col]
+            if col == 1
+                @assert abs(imag(c)) ≤ sqrt(eps())
+                c = Complex(real(c), 0)
+            end
+            C′[row, col] = c2a(c)
+        end
+    end
+
+    return C′
+end
+
+function coeff_vector2complex(C::AbstractArray{SVector{2,Float64},2}, s::Int)
+    @assert abs(s) == 1
+    C′ = Array{Complex{Float64}}(undef, size(C))
+
+    a2c(a) = Complex(a...)
+    for col in 1:size(C′, 2)
+        for row in 1:size(C′, 1)
+            a = C[row, col]
+            if col == 1
+                @assert abs(a[2]) ≤ sqrt(eps())
+                a = SVector(a[1], 0)
+            end
+            C′[row, col] = a2c(a)
+        end
+    end
+
+    return C′
+end
+
 ################################################################################
 
 export spinsph_transform!
@@ -112,6 +150,13 @@ function spinsph_transform(F::AbstractArray{Float64,2}, s::Int)
     F′ = Array{Complex{Float64}}(F)
     C′ = spinsph_transform(F′, s)
     C = coeff_complex2real(C′, s)
+    return C
+end
+function spinsph_transform(F::AbstractArray{SVector{2,Float64},2}, s::Int)
+    a2c(a) = Complex(a...)
+    F′ = a2c.(F)
+    C′ = spinsph_transform(F′, s)
+    C = coeff_complex2vector(C′, s)
     return C
 end
 
@@ -175,6 +220,15 @@ function spinsph_evaluate(C::AbstractArray{Float64,2}, s::Int)
     F = real.(F′)
     return F
 end
+function spinsph_evaluate(C::AbstractArray{SVector{2,Float64},2}, s::Int)
+    # This function might be correct for other s as well, but I didn't
+    # check
+    @assert abs(s) == 1
+    C′ = map(s -> Complex(s[1], s[2]), C)
+    F′ = spinsph_evaluate(C′, s)
+    F = map(c -> SVector(real(c), imag(c)), F′)
+    return F::Array{SVector{2,Float64},2}
+end
 
 ################################################################################
 
@@ -212,19 +266,32 @@ function spinsph_eth(C::AbstractArray{Complex{Float64},2}, s::Int)
 
     return ðC
 end
-
-export spinsph_grad
-function spinsph_grad(C::AbstractArray{Float64,2}, s::Int)
+function spinsph_eth(C::AbstractArray{Float64,2}, s::Int)
     C′ = coeff_real2complex(C, s)
-    ðC = spinsph_eth(C′, s)
+    ðC′ = spinsph_eth(C′, s)
+    ðC = coeff_complex2vector(ðC′, s + 1)
+
+    for col in 1:size(ðC, 2)
+        m = col == 1 ? 0 : (col % 2 == 0 ? -1 : 1) * (col ÷ 2)
+        α = ifelse(m ≥ s, 1, -1)
+        ðC[:, col] .*= α
+    end
+
     return ðC
 end
+function spinsph_eth(C::AbstractArray{SVector{2,Float64},2}, s::Int)
+    C′ = coeff_vector2complex(C, s)
 
-export spinsph_divbar
-function spinsph_divbar(C::AbstractArray{Complex{Float64},2}, s::Int)
-    ð̄̄C′ = spinsph_eth(C, s)
-    ð̄̄C = coeff_complex2real(ð̄̄C′, s + 1)
-    return ð̄̄C
+    for col in 1:size(C′, 2)
+        m = col == 1 ? 0 : (col % 2 == 0 ? -1 : 1) * (col ÷ 2)
+        α = ifelse(m > s + 1, 1, -1)
+        C′[:, col] .*= α
+    end
+
+    ðC′ = spinsph_eth(C′, s)
+    ðC = coeff_complex2real(ðC′, s + 1)
+
+    return ðC
 end
 
 ################################################################################
@@ -263,17 +330,30 @@ function spinsph_ethbar(C::AbstractArray{Complex{Float64},2}, s::Int)
 
     return ð̄C
 end
-
-export spinsph_gradbar
-function spinsph_gradbar(C::AbstractArray{Float64,2}, s::Int)
+function spinsph_ethbar(C::AbstractArray{Float64,2}, s::Int)
     C′ = coeff_real2complex(C, s)
-    ð̄C = spinsph_ethbar(C′, s)
-    return ð̄C
-end
+    ðC′ = spinsph_ethbar(C′, s)
+    ðC = coeff_complex2vector(ðC′, s - 1)
 
-export spinsph_div
-function spinsph_div(C::AbstractArray{Complex{Float64},2}, s::Int)
-    ð̄C′ = spinsph_ethbar(C, s)
-    ð̄C = coeff_complex2real(ð̄C′, s - 1)
-    return ð̄C
+    for col in 1:size(ðC, 2)
+        m = col == 1 ? 0 : (col % 2 == 0 ? -1 : 1) * (col ÷ 2)
+        α = ifelse(m > s, 1, -1)
+        ðC[:, col] .*= α
+    end
+
+    return ðC
+end
+function spinsph_ethbar(C::AbstractArray{SVector{2,Float64},2}, s::Int)
+    C′ = coeff_vector2complex(C, s)
+
+    for col in 1:size(C′, 2)
+        m = col == 1 ? 0 : (col % 2 == 0 ? -1 : 1) * (col ÷ 2)
+        α = ifelse(m ≥ s - 1, 1, -1)
+        C′[:, col] .*= α
+    end
+
+    ðC′ = spinsph_ethbar(C′, s)
+    ðC = coeff_complex2real(ðC′, s - 1)
+
+    return ðC
 end

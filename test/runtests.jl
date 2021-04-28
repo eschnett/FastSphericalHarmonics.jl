@@ -1,6 +1,7 @@
 using FastTransforms
 using FastSphericalHarmonics
 using ForwardDiff
+using LinearAlgebra
 using SpecialFunctions
 using StaticArrays
 using Test
@@ -21,6 +22,8 @@ end
 
 chop(x) = abs2(x) < 100eps(x) ? zero(x) : x
 chop(x::Complex) = Complex(chop(real(x)), chop(imag(x)))
+
+chop2(x) = chop.(x)
 
 # [Generalized binomial coefficient](https://en.wikipedia.org/wiki/Binomial_coefficient#Generalization_and_connection_to_the_binomial_series)
 function Base.binomial(α::Number, k::Integer)
@@ -87,20 +90,38 @@ end
 c2a(c) = SVector(real(c), imag(c))
 a2c(a) = Complex(a[1], a[2])
 
+∂θYlm(l, m, θ, ϕ) = a2c(ForwardDiff.derivative(θ -> c2a(Ylm(l, m, θ, ϕ)), θ))
+∂ϕYlm(l, m, θ, ϕ) = a2c(ForwardDiff.derivative(ϕ -> c2a(Ylm(l, m, θ, ϕ)), ϕ))
 function ∂θsYlm(s, l, m, θ, ϕ)
     return a2c(ForwardDiff.derivative(θ -> c2a(sYlm(s, l, m, θ, ϕ)), θ))
 end
 function ∂ϕsYlm(s, l, m, θ, ϕ)
     return a2c(ForwardDiff.derivative(ϕ -> c2a(sYlm(s, l, m, θ, ϕ)), ϕ))
 end
+function ∂θsYlm(::Type{T}, s, l, m, θ, ϕ) where {T}
+    return a2c(ForwardDiff.derivative(θ -> c2a(sYlm(T, s, l, m, θ, ϕ)), θ))
+end
+function ∂ϕsYlm(::Type{T}, s, l, m, θ, ϕ) where {T}
+    return a2c(ForwardDiff.derivative(ϕ -> c2a(sYlm(T, s, l, m, θ, ϕ)), ϕ))
+end
 
+ðYlm(l, m, θ, ϕ) = -(∂θYlm(l, m, θ, ϕ) + im / sin(θ) * ∂ϕYlm(l, m, θ, ϕ))
+ð̄Ylm(l, m, θ, ϕ) = -(∂θYlm(l, m, θ, ϕ) - im / sin(θ) * ∂ϕYlm(l, m, θ, ϕ))
 function ðsYlm(s, l, m, θ, ϕ)
     return (-(∂θsYlm(s, l, m, θ, ϕ) + im / sin(θ) * ∂ϕsYlm(s, l, m, θ, ϕ)) +
-            s * cos(θ) / sin(θ) * sYlm(s, l, m, θ, ϕ))
+            s * cot(θ) * sYlm(s, l, m, θ, ϕ))
 end
 function ð̄sYlm(s, l, m, θ, ϕ)
     return (-(∂θsYlm(s, l, m, θ, ϕ) - im / sin(θ) * ∂ϕsYlm(s, l, m, θ, ϕ)) -
-            s * cos(θ) / sin(θ) * sYlm(s, l, m, θ, ϕ))
+            s * cot(θ) * sYlm(s, l, m, θ, ϕ))
+end
+function ðsYlm(::Type{T}, s, l, m, θ, ϕ) where {T}
+    return (-(∂θsYlm(T, s, l, m, θ, ϕ) + im / sin(θ) * ∂ϕsYlm(T, s, l, m, θ, ϕ)) +
+            s * cot(θ) * sYlm(T, s, l, m, θ, ϕ))
+end
+function ð̄sYlm(::Type{T}, s, l, m, θ, ϕ) where {T}
+    return (-(∂θsYlm(T, s, l, m, θ, ϕ) - im / sin(θ) * ∂ϕsYlm(T, s, l, m, θ, ϕ)) -
+            s * cot(θ) * sYlm(T, s, l, m, θ, ϕ))
 end
 
 # Real spherical harmonics
