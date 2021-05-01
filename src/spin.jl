@@ -31,12 +31,10 @@ function coeff_complex2real(C::AbstractArray{Complex{Float64},2}, s::Int)
     @assert s == 0
     C′ = Array{Float64}(undef, size(C))
     C′[:, 1] = real.(C[:, 1])
-    for col in 2:2:size(C′, 2)
-        for row in 1:size(C′, 1)
-            avg = (C[row, col] + conj(C[row, col + 1])) / sqrt(2)
-            C′[row, col] = imag(avg)
-            C′[row, col + 1] = real(avg)
-        end
+    for col in 2:2:size(C′, 2), row in 1:size(C′, 1)
+        avg = (C[row, col] + conj(C[row, col + 1])) / sqrt(2)
+        C′[row, col] = imag(avg)
+        C′[row, col + 1] = real(avg)
     end
     return C′
 end
@@ -45,12 +43,10 @@ function coeff_real2complex(C::AbstractArray{Float64,2}, s::Int)
     @assert s == 0
     C′ = Array{Complex{Float64}}(undef, size(C))
     C′[:, 1] = C[:, 1]
-    for col in 2:2:size(C, 2)
-        for row in 1:size(C, 1)
-            val = Complex{Float64}(C[row, col + 1], C[row, col]) / sqrt(2)
-            C′[row, col] = val
-            C′[row, col + 1] = conj(val)
-        end
+    for col in 2:2:size(C, 2), row in 1:size(C, 1)
+        val = Complex{Float64}(C[row, col + 1], C[row, col]) / sqrt(2)
+        C′[row, col] = val
+        C′[row, col + 1] = conj(val)
     end
     return C′
 end
@@ -60,15 +56,13 @@ function coeff_complex2vector(C::AbstractArray{Complex{Float64},2}, s::Int)
     C′ = Array{SVector{2,Float64}}(undef, size(C))
 
     c2a(c) = SVector(real(c), imag(c))
-    for col in 1:size(C′, 2)
-        for row in 1:size(C′, 1)
-            c = C[row, col]
-            if col == 1
-                @assert abs(imag(c)) ≤ sqrt(eps())
-                c = Complex(real(c), 0)
-            end
-            C′[row, col] = c2a(c)
+    for col in 1:size(C′, 2), row in 1:size(C′, 1)
+        c = C[row, col]
+        if col == 1
+            @assert abs(imag(c)) ≤ sqrt(eps())
+            c = Complex(real(c), 0)
         end
+        C′[row, col] = c2a(c)
     end
 
     return C′
@@ -79,15 +73,13 @@ function coeff_vector2complex(C::AbstractArray{SVector{2,Float64},2}, s::Int)
     C′ = Array{Complex{Float64}}(undef, size(C))
 
     a2c(a) = Complex(a...)
-    for col in 1:size(C′, 2)
-        for row in 1:size(C′, 1)
-            a = C[row, col]
-            if col == 1
-                @assert abs(a[2]) ≤ sqrt(eps())
-                a = SVector(a[1], 0)
-            end
-            C′[row, col] = a2c(a)
+    for col in 1:size(C′, 2), row in 1:size(C′, 1)
+        a = C[row, col]
+        if col == 1
+            @assert abs(a[2]) ≤ sqrt(eps())
+            a = SVector(a[1], 0)
         end
+        C′[row, col] = a2c(a)
     end
 
     return C′
