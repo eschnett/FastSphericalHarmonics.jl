@@ -1,6 +1,6 @@
 # FastSphericalHarmonics.jl
 
-East-to-use Spherical Harmonics, based on
+Easy-to-use Spherical Harmonics, based on
 [`FastTransforms.jl`](https://github.com/JuliaApproximation/FastTransforms.jl)
 
 * [![Documenter](https://img.shields.io/badge/docs-dev-blue.svg)](https://eschnett.github.io/FastSphericalHarmonics.jl/dev)
