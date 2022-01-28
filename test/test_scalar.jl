@@ -11,7 +11,7 @@
 end
 
 @testset "Scalar spherical harmonics: simple modes ($T)" for T in [Float64,
-                                                              Complex{Float64}]
+                                                                   Complex{Float64}]
     lmax = 100
 
     N = lmax + 1
@@ -50,7 +50,7 @@ end
 end
 
 @testset "Scalar spherical harmonics: simple modes ($T)" for T in [Float64,
-                                                              Complex{Float64}]
+                                                                   Complex{Float64}]
     lmax = 10
 
     N = lmax + 1
@@ -69,7 +69,7 @@ end
 end
 
 @testset "Scalar spherical harmonics: linearity ($T)" for T in [Float64,
-                                                           Complex{Float64}]
+                                                                Complex{Float64}]
     lmax = 100
 
     N = lmax + 1
@@ -97,7 +97,7 @@ end
 end
 
 @testset "Scalar spherical harmonics: duality ($T)" for T in [Float64,
-                                                         Complex{Float64}]
+                                                              Complex{Float64}]
     lmax = 100
 
     N = lmax + 1
@@ -121,7 +121,7 @@ end
 end
 
 @testset "Scalar spherical harmonics: orthonormality ($T)" for T in [Float64,
-                                                                Complex{Float64}]
+                                                                     Complex{Float64}]
     lmax = 100
     atol = 4 / lmax^2
 
@@ -147,7 +147,7 @@ end
 end
 
 @testset "Scalar spherical harmonics: Laplacian ($T)" for T in [Float64,
-                                                           Complex{Float64}]
+                                                                Complex{Float64}]
     lmax = 100
 
     N = lmax + 1

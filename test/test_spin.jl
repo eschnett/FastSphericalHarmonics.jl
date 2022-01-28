@@ -40,11 +40,29 @@ end
     @test C ≈ unit(spinsph_mode(s, l, m), size(C))
     F′ = spinsph_evaluate(C, s)
     @test F′ ≈ F
+
+    # Test s=1, l=1, m=1
+    s, l, m = 1, 1, 1
+    F = T[Y_s1_1p1(θ, ϕ) for θ in Θ, ϕ in Φ]
+    @test size(F) == (N, M)
+    C = spinsph_transform(F, s)
+    @test C ≈ unit(spinsph_mode(s, l, m), size(C))
+    F′ = spinsph_evaluate(C, s)
+    @test F′ ≈ F
+
+    # Test s=1, l=1, m=-1
+    s, l, m = 1, 1, -1
+    F = T[Y_s1_1m1(θ, ϕ) for θ in Θ, ϕ in Φ]
+    @test size(F) == (N, M)
+    C = spinsph_transform(F, s)
+    @test C ≈ unit(spinsph_mode(s, l, m), size(C))
+    F′ = spinsph_evaluate(C, s)
+    @test F′ ≈ F
 end
 
 @testset "Spin spherical harmonics: simple modes (s=$s, $T)" for s in -2:2,
                                                                  T in [Float64,
-                                                                  Complex{Float64}]
+                                                                       Complex{Float64}]
 
     T <: Real && s ≠ 0 && continue
 
@@ -67,7 +85,7 @@ end
 
 @testset "Spin spherical harmonics: linearity (s=$s, $T)" for s in -2:2,
                                                               T in [Float64,
-                                                               Complex{Float64}]
+                                                                    Complex{Float64}]
 
     T <: Real && s ≠ 0 && continue
 
@@ -102,7 +120,7 @@ end
 
 @testset "Spin spherical harmonics: duality (s=$s, $T)" for s in -2:2,
                                                             T in [Float64,
-                                                             Complex{Float64}]
+                                                                  Complex{Float64}]
 
     T <: Real && s ≠ 0 && continue
 
