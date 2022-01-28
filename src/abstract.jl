@@ -54,7 +54,8 @@ function ash_mode_index(s::Integer, l::Integer, m::Integer, lmax::Integer)
 end
 
 function change_signs!(flm::AbstractArray{<:Complex}, s::Integer)
-    for (row, col) in CartesianIndices(flm)
+    for rowcol in CartesianIndex(flm)
+        row, col = Tuple(rowcol)
         m = col == 1 ? 0 : (col % 2 == 0 ? -1 : 1) * (col ÷ 2)
         l = row + max(abs(s), abs(m)) - 1
         sign = (isodd(s) && m < -s) || (m >= -s && isodd(m)) ? -1 : +1
