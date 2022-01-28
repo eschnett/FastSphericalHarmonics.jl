@@ -71,7 +71,7 @@ function ash_transform!(flm::AbstractArray{<:Complex},
     return change_signs!(flm, s)
 end
 function ash_transform(f::AbstractMatrix{<:Complex}, s::Integer, lmax::Integer)
-    return ash_transform!(similar(f), f, s)
+    return ash_transform!(similar(f), f, s, lmax)
 end
 
 function ash_evaluate!(f::AbstractMatrix{<:Complex},
@@ -81,7 +81,7 @@ function ash_evaluate!(f::AbstractMatrix{<:Complex},
     return spinsph_evaluate!(f, s)
 end
 function ash_evaluate(flm::AbstractArray{<:Complex}, s::Integer, lmax::Integer)
-    return ash_evaluate!(similar(flm), flm, s)
+    return ash_evaluate!(similar(flm), flm, s, lmax)
 end
 
 export ash_eth!, ash_eth, ash_ethbar!, ash_ethbar
@@ -94,7 +94,7 @@ function ash_eth!(ðflm::AbstractArray{<:Complex}, flm::AbstractArray{<:Complex}
     return change_signs!(ðflm, s + 1)
 end
 function ash_eth(flm::AbstractArray{<:Complex}, s::Integer, lmax::Integer)
-    return ash_eth(similar(flm), flm, s)
+    return ash_eth(similar(flm), flm, s, lmax)
 end
 
 function ash_ethbar!(ð̄flm::AbstractArray{<:Complex},
@@ -106,5 +106,5 @@ function ash_ethbar!(ð̄flm::AbstractArray{<:Complex},
     return change_signs!(ð̄flm, s - 1)
 end
 function ash_ethbar(flm::AbstractArray{<:Complex}, s::Integer, lmax::Integer)
-    return ash_ethbar(similar(flm), flm, s)
+    return ash_ethbar(similar(flm), flm, s, lmax)
 end
