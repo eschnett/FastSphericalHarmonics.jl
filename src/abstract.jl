@@ -45,6 +45,7 @@ function ash_point_delta(ij::CartesianIndex{2}, lmax::Integer)
 end
 ash_grid_as_phi_theta(grid::AbstractMatrix) = transpose(grid)
 
+export ash_mode_index
 function ash_mode_index(s::Integer, l::Integer, m::Integer, lmax::Integer)
     0 ≤ lmax || throw(DomainError())
     abs(s) ≤ l ≤ lmax || throw(DomainError())
