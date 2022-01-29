@@ -1,12 +1,12 @@
 export ash_grid_size, ash_nmodes
 function ash_grid_size(lmax::Integer)
-    0 ≤ lmax || throw(DomainError())
+    0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     N = Int(lmax) + 1
     M = 2 * N - 1
     return N, M
 end
 function ash_nmodes(lmax::Integer)
-    0 ≤ lmax || throw(DomainError())
+    0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     N = Int(lmax) + 1
     M = 2 * N - 1
     return N, M
@@ -17,17 +17,17 @@ export ash_ntheta, ash_nphi, ash_thetas, ash_phis, ash_point_coord,
 ash_ntheta(lmax) = ash_grid_size(lmax)[1]
 ash_nphi(lmax) = ash_grid_size(lmax)[2]
 function ash_thetas(lmax::Integer)
-    0 ≤ lmax || throw(DomainError())
+    0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     N = Int(lmax) + 1
     return sph_points(N)[1]
 end
 function ash_phis(lmax::Integer)
-    0 ≤ lmax || throw(DomainError())
+    0 ≤ lmax || throw(DomainError(lmax))
     N = Int(lmax) + 1
     return sph_points(N)[2]
 end
 function ash_point_coord(ij::CartesianIndex{2}, lmax::Integer)
-    0 ≤ lmax || throw(DomainError())
+    0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     N = Int(lmax) + 1
     M = 2 * N - 1
     t, p = Tuple(ij)
@@ -36,7 +36,7 @@ function ash_point_coord(ij::CartesianIndex{2}, lmax::Integer)
     return theta, phi
 end
 function ash_point_delta(ij::CartesianIndex{2}, lmax::Integer)
-    0 ≤ lmax || throw(DomainError())
+    0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     N = Int(lmax) + 1
     M = 2 * N - 1
     dtheta = π / N
@@ -47,19 +47,19 @@ ash_grid_as_phi_theta(grid::AbstractMatrix) = transpose(grid)
 
 export ash_mode_index
 function ash_mode_index(s::Integer, l::Integer, m::Integer, lmax::Integer)
-    0 ≤ lmax || throw(DomainError())
-    abs(s) ≤ l ≤ lmax || throw(DomainError())
-    -l ≤ m ≤ l || throw(DomainError())
+    0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
+    abs(s) ≤ l ≤ lmax || throw(DomainError(l, "Need abs(s) ≤ l ≤ lmax"))
+    -l ≤ m ≤ l || throw(DomainError(m, "Need -l ≤ m ≤ l"))
     return spinsph_mode(s, l, m)
 end
 
 function change_signs!(flm::AbstractArray{<:Complex}, s::Integer)
-    for rowcol in CartesianIndices(flm)
-        row, col = Tuple(rowcol)
+    for ind in CartesianIndices(flm)
+        row, col = Tuple(ind)
         m = col == 1 ? 0 : (col % 2 == 0 ? -1 : 1) * (col ÷ 2)
         l = row + max(abs(s), abs(m)) - 1
         sign = (isodd(s) && m < -s) || (m >= -s && isodd(m)) ? -1 : +1
-        flm[row, col] = flipsign(flm[row, col], sign)
+        flm[ind] = flipsign(flm[ind], sign)
     end
     return flm
 end
@@ -69,12 +69,13 @@ function ash_transform!(flm::AbstractArray{<:Complex},
                         f::AbstractMatrix{<:Complex}, s::Integer, lmax::Integer)
     # Work around <https://github.com/JuliaApproximation/FastTransforms.jl/issues/162>
     if lmax == 0
-        flm[1,1] = sqrt(4π) * f[1,1]
+        flm[1, 1] = sqrt(4π) * f[1, 1]
         return flm
     end
     flm .= f
     spinsph_transform!(flm, s)
-    return change_signs!(flm, s)
+    change_signs!(flm, s)
+    return flm
 end
 function ash_transform(f::AbstractMatrix{<:Complex}, s::Integer, lmax::Integer)
     return ash_transform!(similar(f), f, s, lmax)
@@ -84,7 +85,8 @@ function ash_evaluate!(f::AbstractMatrix{<:Complex},
                        flm::AbstractArray{<:Complex}, s::Integer, lmax::Integer)
     f .= flm
     change_signs!(f, s)
-    return spinsph_evaluate!(f, s)
+    spinsph_evaluate!(f, s)
+    return f
 end
 function ash_evaluate(flm::AbstractArray{<:Complex}, s::Integer, lmax::Integer)
     return ash_evaluate!(similar(flm), flm, s, lmax)
@@ -97,7 +99,8 @@ function ash_eth!(ðflm::AbstractArray{<:Complex}, flm::AbstractArray{<:Complex}
     flm′ .= flm
     change_signs!(flm′, s)
     ðflm .= spinsph_eth(flm′, s)
-    return change_signs!(ðflm, s + 1)
+    change_signs!(ðflm, s + 1)
+    return ðflm
 end
 function ash_eth(flm::AbstractArray{<:Complex}, s::Integer, lmax::Integer)
     return ash_eth(similar(flm), flm, s, lmax)
@@ -109,7 +112,8 @@ function ash_ethbar!(ð̄flm::AbstractArray{<:Complex},
     flm′ .= flm
     change_signs!(flm′, s)
     ð̄flm .= spinsph_ethbar(flm′, s)
-    return change_signs!(ð̄flm, s - 1)
+    change_signs!(ð̄flm, s - 1)
+    return ð̄flm
 end
 function ash_ethbar(flm::AbstractArray{<:Complex}, s::Integer, lmax::Integer)
     return ash_ethbar(similar(flm), flm, s, lmax)
