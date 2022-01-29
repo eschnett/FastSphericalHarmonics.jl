@@ -67,6 +67,11 @@ end
 export ash_transform!, ash_transform, ash_evaluate!, ash_evaluate
 function ash_transform!(flm::AbstractArray{<:Complex},
                         f::AbstractMatrix{<:Complex}, s::Integer, lmax::Integer)
+    # Work around <https://github.com/JuliaApproximation/FastTransforms.jl/issues/162>
+    if lmax == 0
+        flm[1,1] = sqrt(4π) * f[1,1]
+        return flm
+    end
     flm .= f
     spinsph_transform!(flm, s)
     return change_signs!(flm, s)
