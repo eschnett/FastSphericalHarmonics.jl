@@ -144,16 +144,16 @@ Y_1m1(θ, ϕ) = sqrt(3 / 4π) * sin(θ) * sin(ϕ)
 Y_s0_0_0(θ, ϕ) = 1 / (2 * sqrt(π))
 
 Y_s0_1_0(θ, ϕ) = 1 / 2 * sqrt(3 / π) * cos(θ)
-Y_s0_1p1(θ, ϕ) = cis(ϕ) * sqrt(3 / (2 * π)) * cos(θ / 2) * sin(θ / 2)
-Y_s0_1p1(θ, ϕ) = cis(-f) * sqrt(3 / (2 * π)) * cos(θ / 2) * sin(θ / 2)
+Y_s0_1p1(θ, ϕ) = cis(ϕ) * sqrt(3 / 2π) * cos(θ / 2) * sin(θ / 2)
+Y_s0_1p1(θ, ϕ) = cis(-ϕ) * sqrt(3 / 2π) * cos(θ / 2) * sin(θ / 2)
 
-Y_s1_1_0(θ, ϕ) = sqrt(3 / (2 * π)) * cos(θ / 2) * sin(θ / 2)
-Y_s1_1p1(θ, ϕ) = 1 / 2 * cis(f) * sqrt(3 / π) * sin(θ / 2)^2
-Y_s1_1m1(θ, ϕ) = 1 / 2 * cis(-f) * sqrt(3 / π) * cos(θ / 2)^2
+Y_s1_1_0(θ, ϕ) = sqrt(3 / 2π) * cos(θ / 2) * sin(θ / 2)
+Y_s1_1p1(θ, ϕ) = 1 / 2 * cis(ϕ) * sqrt(3 / π) * sin(θ / 2)^2
+Y_s1_1m1(θ, ϕ) = 1 / 2 * cis(-ϕ) * sqrt(3 / π) * cos(θ / 2)^2
 
-Y_s1_2_0(θ, ϕ) = sqrt(15 / (2 * π)) * cos(θ / 2) * cos(θ) * sin(θ / 2)
-Y_s1_2p1(θ, ϕ) = 1 / 4 * cis(f) * sqrt(5 / π) * (2 + 4 * cos(θ)) * sin(θ / 2)^2
-Y_s1_2p2(θ, ϕ) = cis(2 * f) * sqrt(5 / π) * cos(θ / 2) * sin(θ / 2)^3
+Y_s1_2_0(θ, ϕ) = sqrt(15 / 2π) * cos(θ / 2) * cos(θ) * sin(θ / 2)
+Y_s1_2p1(θ, ϕ) = 1 / 4 * cis(ϕ) * sqrt(5 / π) * (2 + 4 * cos(θ)) * sin(θ / 2)^2
+Y_s1_2p2(θ, ϕ) = cis(2ϕ) * sqrt(5 / π) * cos(θ / 2) * sin(θ / 2)^3
 
 # # Real gradient spherical harmonics
 # # [∂θ, 1/sin(θ) ∂ϕ]
@@ -216,5 +216,5 @@ end
 include("test_fasttransforms.jl")
 include("test_points.jl")
 include("test_scalar.jl")
-# include("test_vector.jl")
 include("test_spin.jl")
+#TODO include("test_tensor.jl")
