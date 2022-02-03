@@ -92,9 +92,7 @@ function ash_eth!(ðflm::AbstractArray{<:Complex}, flm::AbstractArray{<:Complex}
                   s::Integer, lmax::Integer)
     flm′ = ðflm
     flm′ .= flm
-    # change_signs!(flm′, s)
     ðflm .= spinsph_eth(flm′, s)
-    # change_signs!(ðflm, s + 1)
     return ðflm
 end
 function ash_eth(flm::AbstractArray{<:Complex}, s::Integer, lmax::Integer)
@@ -105,9 +103,7 @@ function ash_ethbar!(ð̄flm::AbstractArray{<:Complex},
                      flm::AbstractArray{<:Complex}, s::Integer, lmax::Integer)
     flm′ = ð̄flm
     flm′ .= flm
-    # change_signs!(flm′, s)
     ð̄flm .= spinsph_ethbar(flm′, s)
-    # change_signs!(ð̄flm, s - 1)
     return ð̄flm
 end
 function ash_ethbar(flm::AbstractArray{<:Complex}, s::Integer, lmax::Integer)
