@@ -9,6 +9,5 @@ include("points.jl")
 include("scalar.jl")
 include("spin.jl")
 include("abstract.jl")
-# include("tensor.jl")
 
 end
