@@ -3,19 +3,19 @@ function ash_grid_size(lmax::Integer)
     0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     N = Int(lmax) + 1
     M = 2 * N - 1
-    return N, M
+    return (N, M)::NTuple{2,Int}
 end
 function ash_nmodes(lmax::Integer)
     0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     N = Int(lmax) + 1
     M = 2 * N - 1
-    return N, M
+    return (N, M)::NTuple{2,Int}
 end
 
 export ash_ntheta, ash_nphi, ash_thetas, ash_phis, ash_point_coord,
        ash_point_delta, ash_grid_as_phi_theta
-ash_ntheta(lmax) = ash_grid_size(lmax)[1]
-ash_nphi(lmax) = ash_grid_size(lmax)[2]
+ash_ntheta(lmax) = ash_grid_size(lmax)[1]::Int
+ash_nphi(lmax) = ash_grid_size(lmax)[2]::Int
 function ash_thetas(lmax::Integer)
     0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     N = Int(lmax) + 1
@@ -50,7 +50,24 @@ function ash_mode_index(s::Integer, l::Integer, m::Integer, lmax::Integer)
     0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     abs(s) ≤ l ≤ lmax || throw(DomainError(l, "Need abs(s) ≤ l ≤ lmax"))
     -l ≤ m ≤ l || throw(DomainError(m, "Need -l ≤ m ≤ l"))
-    return spinsph_mode(s, l, m)
+    return spinsph_mode(s, l, m)::NTuple{2,Int}
+end
+export ash_mode_numbers
+function ash_mode_numbers(s::Int, ind::NTuple{2,Int}, lmax::Int)
+    0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
+    N = Int(lmax) + 1
+    M = 2 * N - 1
+    # ind[2] = 2 * abs(m) + (m ≥ 0)
+    msign = isodd(ind[2]) ? +1 : -1
+    mabs = ind[2] ÷ 2
+    m = msign * mabs
+    # ind[1] = l - max(abs(s), abs(m)) + 1
+    l = ind[1] - max(abs(s), abs(m)) - 1
+    @assert mode_index(s, l, m, lmax) == ind
+    return (l, m)::NTuple{2,Int}
+end
+function ash_mode_numbers(s::Integer, ind::NTuple{2,<:Integer}, lmax::Integer)
+    return ash_mode_numbers(Int(s), NTuple{2,Int}(ind), Int(lmax))
 end
 
 function change_signs!(flm::AbstractArray{<:Complex}, s::Integer)
