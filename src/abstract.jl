@@ -26,7 +26,8 @@ function ash_phis(lmax::Integer)
     N = Int(lmax) + 1
     return sph_points(N)[2]
 end
-function ash_point_coord(ij::Union{CartesianIndex{2},NTuple{2,Int}}, lmax::Integer)
+function ash_point_coord(ij::Union{CartesianIndex{2},NTuple{2,Int}},
+                         lmax::Integer)
     0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     N = Int(lmax) + 1
     M = 2 * N - 1
@@ -35,7 +36,8 @@ function ash_point_coord(ij::Union{CartesianIndex{2},NTuple{2,Int}}, lmax::Integ
     phi = (2π / M * (0:(M - 1)))[p]
     return theta, phi
 end
-function ash_point_delta(ij::Union{CartesianIndex{2},NTuple{2,Int}}, lmax::Integer)
+function ash_point_delta(ij::Union{CartesianIndex{2},NTuple{2,Int}},
+                         lmax::Integer)
     0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     N = Int(lmax) + 1
     M = 2 * N - 1
@@ -50,7 +52,7 @@ function ash_mode_index(s::Integer, l::Integer, m::Integer, lmax::Integer)
     0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     abs(s) ≤ l ≤ lmax || throw(DomainError(l, "Need abs(s) ≤ l ≤ lmax"))
     -l ≤ m ≤ l || throw(DomainError(m, "Need -l ≤ m ≤ l"))
-    return spinsph_mode(s, l, m)::NTuple{2,Int}
+    return CartesianIndex(spinsph_mode(s, l, m)...)::CartesianIndex{2}
 end
 export ash_mode_numbers
 function ash_mode_numbers(s::Int, ind::NTuple{2,Int}, lmax::Int)
