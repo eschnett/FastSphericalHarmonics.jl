@@ -52,7 +52,7 @@ function ash_mode_index(s::Integer, l::Integer, m::Integer, lmax::Integer)
     0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     abs(s) ≤ l ≤ lmax || throw(DomainError(l, "Need abs(s) ≤ l ≤ lmax"))
     -l ≤ m ≤ l || throw(DomainError(m, "Need -l ≤ m ≤ l"))
-    return CartesianIndex(spinsph_mode(s, l, m)...)::CartesianIndex{2}
+    return spinsph_mode(s, l, m)::CartesianIndex{2}
 end
 export ash_mode_numbers
 function ash_mode_numbers(s::Int, ind::Union{CartesianIndex{2},NTuple{2,Int}},
