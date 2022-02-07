@@ -26,7 +26,7 @@ function ash_phis(lmax::Integer)
     N = Int(lmax) + 1
     return sph_points(N)[2]
 end
-function ash_point_coord(ij::CartesianIndex{2}, lmax::Integer)
+function ash_point_coord(ij::Union{CartesianIndex{2},NTuple{2,Int}}, lmax::Integer)
     0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     N = Int(lmax) + 1
     M = 2 * N - 1
@@ -35,7 +35,7 @@ function ash_point_coord(ij::CartesianIndex{2}, lmax::Integer)
     phi = (2π / M * (0:(M - 1)))[p]
     return theta, phi
 end
-function ash_point_delta(ij::CartesianIndex{2}, lmax::Integer)
+function ash_point_delta(ij::Union{CartesianIndex{2},NTuple{2,Int}}, lmax::Integer)
     0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
     N = Int(lmax) + 1
     M = 2 * N - 1
