@@ -64,7 +64,7 @@ function ash_mode_numbers(s::Int, ind::CartesianIndex{2}, lmax::Int)
     mabs = ind[2] ÷ 2
     m = msign * mabs
     # ind[1] = l - max(abs(s), abs(m)) + 1
-    l = ind[1] - max(abs(s), abs(m)) - 1
+    l = ind[1] + max(abs(s), abs(m)) - 1
     @assert ash_mode_index(s, l, m, lmax) == ind
     return (l, m)::NTuple{2,Int}
 end
