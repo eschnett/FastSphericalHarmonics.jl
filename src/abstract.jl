@@ -55,9 +55,10 @@ function ash_mode_index(s::Integer, l::Integer, m::Integer, lmax::Integer)
     return CartesianIndex(spinsph_mode(s, l, m)...)::CartesianIndex{2}
 end
 export ash_mode_numbers
-function ash_mode_numbers(s::Int, ind::NTuple{2,Int}, lmax::Int)
+function ash_mode_numbers(s::Int, ind::Union{CartesianIndex{2},NTuple{2,Int}},
+                          lmax::Int)
     0 ≤ lmax || throw(DomainError(lmax, "Need 0 ≤ lmax"))
-    N = Int(lmax) + 1
+    N = lmax + 1
     M = 2 * N - 1
     # ind[2] = 2 * abs(m) + (m ≥ 0)
     msign = isodd(ind[2]) ? +1 : -1
@@ -67,6 +68,9 @@ function ash_mode_numbers(s::Int, ind::NTuple{2,Int}, lmax::Int)
     l = ind[1] - max(abs(s), abs(m)) - 1
     @assert mode_index(s, l, m, lmax) == ind
     return (l, m)::NTuple{2,Int}
+end
+function ash_mode_numbers(s::Integer, ind::CartesianIndex{2}, lmax::Integer)
+    return ash_mode_numbers(Int(s), ind, Int(lmax))
 end
 function ash_mode_numbers(s::Integer, ind::NTuple{2,<:Integer}, lmax::Integer)
     return ash_mode_numbers(Int(s), NTuple{2,Int}(ind), Int(lmax))
