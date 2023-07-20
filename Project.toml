@@ -11,6 +11,6 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 ComputedFieldTypes = "1.0.0"
-FastTransforms = "0.13.6, 0.15.0"
+FastTransforms = "0.13.1, 0.15.0"
 StaticArrays = "1.1.1"
-julia = "1.7"
+julia = "1.6"
