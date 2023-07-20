@@ -30,7 +30,7 @@ end
 function coeff_complex2real(C::AbstractArray{Complex{Float64},2}, s::Int)
     @assert s == 0
     C′ = Array{Float64}(undef, size(C))
-    C′[:, 1] = real.(C[:, 1])
+    @views C′[:, 1] .= real.(C[:, 1])
     for col in 2:2:size(C′, 2), row in 1:size(C′, 1)
         avg = (C[row, col] + conj(C[row, col + 1])) / sqrt(2)
         C′[row, col] = imag(avg)
@@ -42,7 +42,7 @@ end
 function coeff_real2complex(C::AbstractArray{Float64,2}, s::Int)
     @assert s == 0
     C′ = Array{Complex{Float64}}(undef, size(C))
-    C′[:, 1] = C[:, 1]
+    @views C′[:, 1] = C[:, 1]
     for col in 2:2:size(C, 2), row in 1:size(C, 1)
         val = Complex{Float64}(C[row, col + 1], C[row, col]) / sqrt(2)
         C′[row, col] = val
@@ -266,7 +266,7 @@ function spinsph_eth(C::AbstractArray{Float64,2}, s::Int)
     for col in 1:size(ðC, 2)
         m = col == 1 ? 0 : (col % 2 == 0 ? -1 : 1) * (col ÷ 2)
         α = ifelse(m ≥ s, 1, -1)
-        ðC[:, col] .*= α
+        @views ðC[:, col] .*= α
     end
 
     return ðC
@@ -277,7 +277,7 @@ function spinsph_eth(C::AbstractArray{SVector{2,Float64},2}, s::Int)
     for col in 1:size(C′, 2)
         m = col == 1 ? 0 : (col % 2 == 0 ? -1 : 1) * (col ÷ 2)
         α = ifelse(m > s + 1, 1, -1)
-        C′[:, col] .*= α
+        @views C′[:, col] .*= α
     end
 
     ðC′ = spinsph_eth(C′, s)
@@ -330,7 +330,7 @@ function spinsph_ethbar(C::AbstractArray{Float64,2}, s::Int)
     for col in 1:size(ðC, 2)
         m = col == 1 ? 0 : (col % 2 == 0 ? -1 : 1) * (col ÷ 2)
         α = ifelse(m > s, 1, -1)
-        ðC[:, col] .*= α
+        @views ðC[:, col] .*= α
     end
 
     return ðC
@@ -341,7 +341,7 @@ function spinsph_ethbar(C::AbstractArray{SVector{2,Float64},2}, s::Int)
     for col in 1:size(C′, 2)
         m = col == 1 ? 0 : (col % 2 == 0 ? -1 : 1) * (col ÷ 2)
         α = ifelse(m ≥ s - 1, 1, -1)
-        C′[:, col] .*= α
+        @views C′[:, col] .*= α
     end
 
     ðC′ = spinsph_ethbar(C′, s)
