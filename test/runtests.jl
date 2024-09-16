@@ -26,7 +26,7 @@ chop(x::Complex) = Complex(chop(real(x)), chop(imag(x)))
 chop2(x) = chop.(x)
 
 # [Generalized binomial coefficient](https://en.wikipedia.org/wiki/Binomial_coefficient#Generalization_and_connection_to_the_binomial_series)
-function Base.binomial(α::Number, k::Integer)
+function binomial2(α::Number, k::Integer)
     k == 0 && return one(α)
     return prod((α - i) / (k - i) for i in 0:(k - 1))
 end
@@ -35,7 +35,7 @@ end
 # Polynomials](https://en.wikipedia.org/wiki/Jacobi_polynomials)
 function JacobiP(α, β, n, z)
     return gamma(α + n + 1) / (factorial(n) * gamma(α + β + n + 1)) *
-           sum(binomial(n, m) * gamma(α + β + n + m + 1) / gamma(α + m + 1) *
+           sum(binomial2(n, m) * gamma(α + β + n + m + 1) / gamma(α + m + 1) *
                ((z - 1) / 2)^m for m in 0:n)
 end
 
@@ -47,8 +47,8 @@ function LegendreP(l, m, x)
            sqrt(1 - x^2)^m *
            sum(factorial(k) / factorial(k - m) *
                x^(k - m) *
-               binomial(l, k) *
-               binomial((l + k - 1) / 2, l) for k in m:l)
+               binomial2(l, k) *
+               binomial2((l + k - 1) / 2, l) for k in m:l)
 end
 
 # [Spherical
