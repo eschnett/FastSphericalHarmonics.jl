@@ -1,5 +1,5 @@
 # Generate documentation with this command:
-# (cd docs && julia --color=yes make.jl)
+# (cd docs && julia make.jl)
 
 push!(LOAD_PATH, "..")
 
