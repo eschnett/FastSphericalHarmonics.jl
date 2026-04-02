@@ -162,3 +162,24 @@ end
     ΔF = sph_evaluate(ΔC)
     @test ΔF ≈ -2F
 end
+
+@testset "Scalar spherical harmonics: caching ($T)" for T in [Float64,
+                                                              Complex{Float64}]
+    lmax = 100
+
+    N = lmax + 1
+    Θ, Φ = sph_points(N)
+    @test length(Θ) == N
+    M = length(Φ)
+
+    cache = SphPlanCache{T}()
+
+    for iter in 1:3
+        # z + 2x
+        F = T[cos(θ) + 2 * sin(θ) * cos(ϕ) for θ in Θ, ϕ in Φ]
+        C = sph_transform(F; cache=cache)
+        ΔC = sph_laplace(C)
+        ΔF = sph_evaluate(ΔC; cache=cache)
+        @test ΔF ≈ -2F
+    end
+end

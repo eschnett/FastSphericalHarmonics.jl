@@ -28,6 +28,7 @@ sph_lmax
 
 ```@docs
 sph_mode
+SphPlanCache
 sph_transform!
 sph_transform
 sph_evaluate!
@@ -40,6 +41,7 @@ sph_laplace
 
 ```@docs
 spinsph_mode
+SpinSphPlanCache
 spinsph_transform!
 spinsph_transform
 spinsph_evaluate!
