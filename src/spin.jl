@@ -87,14 +87,45 @@ end
 
 ################################################################################
 
+export SpinSphPlanCache
+"""
+    struct SpinSphPlanCache{T}
+
+A cache for storing the Fourier transform plans used internally. This
+makes repeated calls to Fourier transforms more efficient.
+
+When a cache is passed to a function that performs a Fourier transform
+internally, then the cache will be automatically populated if it is
+empty. The same cache can be used for both transforms and evaluations.
+A cache is specific to a particular array element type and spin weight.
+
+See also: [`spinsph_transform!`](@ref), [`spinsph_transform`](@ref),
+[`spinsph_evaluate!`](@ref), [`spinsph_evaluate`](@ref)
+"""
+struct SpinSphPlanCache{T}
+    P::Dict{NTuple{2,Int},Any}  # (s, N)
+    PA::Dict{NTuple{2,Int},Any}
+    PS::Dict{NTuple{2,Int},Any}
+    function SpinSphPlanCache{T}() where {T}
+        return new{T}(Dict{NTuple{2,Int},Any}(), Dict{NTuple{2,Int},Any}(),
+                      Dict{NTuple{2,Int},Any}())
+    end
+end
+
+################################################################################
+
 export spinsph_transform!
 """
-    spinsph_transform!(F::Array{Complex{Float64},2}, s::Int)
+    spinsph_transform!(F::Array{Complex{Float64},2}, s::Int;
+                       cache::SpinSphPlanCache{T}=SpinSphPlanCache{T}())
 
 Calculate the spin spherical harmonic transformation with spin weight
 `s`. This is an in-place transform, i.e. the array `F` will be
 overwritten by the coefficients. Use [`spinsph_transform`](@ref) for a
 non-mutating function.
+
+The optional `cache` argument can be used to speed up repeated calls
+for inputs of the same size; see [`SphPlanCache`](@ref).
 
 Use [`sph_points`](@ref) to caluclate the location of the points on
 the sphere for the input array `F`.
@@ -105,12 +136,13 @@ coefficient array for a particular `l`,`m` mode with spin weight `s`.
 See also: [`spinsph_transform`](@ref), [`spinsph_evaluate!`](@ref),
 [`sph_points`](@ref), [`spinsph_mode`](@ref)
 """
-function spinsph_transform!(F::Array{Complex{Float64},2}, s::Int)
+function spinsph_transform!(F::Array{Complex{Float64},2}, s::Int;
+                            cache::SpinSphPlanCache{Complex{Float64}}=SpinSphPlanCache{Complex{Float64}}())
     N, M = size(F)
     @assert M > 0 && N > 0
     @assert M == 2 * N - 1
-    P = plan_spinsph2fourier(F, s)
-    PA = plan_spinsph_analysis(F, s)
+    P = get!(() -> plan_spinsph2fourier(F, s), cache.P, (s, N))
+    PA = get!(() -> plan_spinsph_analysis(F, s), cache.PA, (s, N))
     C = F
     lmul!(PA, C)
     ldiv!(P, C)
@@ -119,12 +151,16 @@ end
 
 export spinsph_transform
 """
-    C = spinsph_transform(F::AbstractArray{Complex{Float64},2}, s::Int)
+    C = spinsph_transform(F::AbstractArray{Complex{Float64},2}, s::Int;
+                          cache::SpinSphPlanCache{T}=SpinSphPlanCache{T}())
     C::Array{Complex{Float64},2}
 
 Calculate the spin spherical harmonic transformation with spin weight
 `s`. You can use [`spinsph_transform!`](@ref) for more efficient a
 mutating function that overwrites its argument `F`.
+
+The optional `cache` argument can be used to speed up repeated calls
+for inputs of the same size; see [`SphPlanCache`](@ref).
 
 Use [`sph_points`](@ref) to caluclate the location of the points on
 the sphere for the input array `F`.
@@ -135,19 +171,22 @@ coefficient array for a particular `l`,`m` mode with spin weight `s`.
 See also: [`spinsph_transform!`](@ref), [`spinsph_evaluate`](@ref),
 [`sph_points`](@ref), [`spinsph_mode`](@ref)
 """
-function spinsph_transform(F::AbstractArray{Complex{Float64},2}, s::Int)
-    return spinsph_transform!(Array(F), s)
+function spinsph_transform(F::AbstractArray{Complex{Float64},2}, s::Int;
+                           cache::SpinSphPlanCache{Complex{Float64}}=SpinSphPlanCache{Complex{Float64}}())
+    return spinsph_transform!(Array(F), s; cache=cache)
 end
-function spinsph_transform(F::AbstractArray{Float64,2}, s::Int)
+function spinsph_transform(F::AbstractArray{Float64,2}, s::Int;
+                           cache::SpinSphPlanCache{Complex{Float64}}=SpinSphPlanCache{Complex{Float64}}())
     F′ = Array{Complex{Float64}}(F)
-    C′ = spinsph_transform(F′, s)
+    C′ = spinsph_transform(F′, s; cache=cache)
     C = coeff_complex2real(C′, s)
     return C
 end
-function spinsph_transform(F::AbstractArray{SVector{2,Float64},2}, s::Int)
+function spinsph_transform(F::AbstractArray{SVector{2,Float64},2}, s::Int;
+                           cache::SpinSphPlanCache{Complex{Float64}}=SpinSphPlanCache{Complex{Float64}}())
     a2c(a) = Complex(a...)
     F′ = a2c.(F)
-    C′ = spinsph_transform(F′, s)
+    C′ = spinsph_transform(F′, s; cache=cache)
     C = coeff_complex2vector(C′, s)
     return C
 end
@@ -156,12 +195,16 @@ end
 
 export spinsph_evaluate!
 """
-    spinsph_evaluate!(C::Array{Complex{Float64},2}, s::Int)
+    spinsph_evaluate!(C::Array{Complex{Float64},2}, s::Int;
+                      cache::SpinSphPlanCache{T}=SpinSphPlanCache{T}())
 
 Evaluate the spin spherical harmonic transformation with spin weight
 `s` on points on the sphere. This is an in-place transform, i.e. the
 array `C` will be overwritten by the point values. Use
 [`spinsph_evaluate`](@ref) for a non-mutating function.
+
+The optional `cache` argument can be used to speed up repeated calls
+for inputs of the same size; see [`SphPlanCache`](@ref).
 
 Use [`spinsph_mode`](@ref) to calculate the location in the input
 coefficient array for a particular `l`,`m` mode with spin weight `s`.
@@ -172,12 +215,13 @@ sphere in the output array `F`.
 See also: [`spinsph_evaluate`](@ref), [`spinsph_transform!`](@ref),
 [`spinsph_mode`](@ref), [`sph_points`](@ref)
 """
-function spinsph_evaluate!(C::Array{Complex{Float64},2}, s::Int)
+function spinsph_evaluate!(C::Array{Complex{Float64},2}, s::Int;
+                           cache::SpinSphPlanCache{Complex{Float64}}=SpinSphPlanCache{Complex{Float64}}())
     N, M = size(C)
     @assert M > 0 && N > 0
     @assert M == 2 * N - 1
-    P = plan_spinsph2fourier(C, s)
-    PS = plan_spinsph_synthesis(C, s)
+    P = get!(() -> plan_spinsph2fourier(C, s), cache.P, (s, N))
+    PS = get!(() -> plan_spinsph_synthesis(C, s), cache.PS, (s, N))
     F = C
     lmul!(P, F)
     lmul!(PS, F)
@@ -186,13 +230,17 @@ end
 
 export spinsph_evaluate
 """
-    F = spinsph_evaluate(C::AbstractArray{Complex{Float64},2}, s::Int)
+    F = spinsph_evaluate(C::AbstractArray{Complex{Float64},2}, s::Int;
+                         cache::SpinSphPlanCache{T}=SpinSphPlanCache{T}())
     F::Array{Complex{Float64},2}
 
 Evaluate the spin spherical harmonic transformation with spin weight
 `s` on points on the sphere. You can use [`spinsph_evaluate!`](@ref)
 for more efficient a mutating function that overwrites its argument
 `C`.
+
+The optional `cache` argument can be used to speed up repeated calls
+for inputs of the same size; see [`SphPlanCache`](@ref).
 
 Use [`spinsph_mode`](@ref) to calculate the location in the input
 coefficient array for a particular `l`,`m` mode with spin weight `s`.
@@ -203,21 +251,24 @@ sphere in the output array `F`.
 See also: [`spinsph_evaluate!`](@ref), [`spinsph_transform`](@ref),
 [`spinsph_mode`](@ref), [`sph_points`](@ref)
 """
-function spinsph_evaluate(C::AbstractArray{Complex{Float64},2}, s::Int)
-    return spinsph_evaluate!(Array(C), s)
+function spinsph_evaluate(C::AbstractArray{Complex{Float64},2}, s::Int;
+                          cache::SpinSphPlanCache{Complex{Float64}}=SpinSphPlanCache{Complex{Float64}}())
+    return spinsph_evaluate!(Array(C), s; cache=cache)
 end
-function spinsph_evaluate(C::AbstractArray{Float64,2}, s::Int)
+function spinsph_evaluate(C::AbstractArray{Float64,2}, s::Int;
+                          cache::SpinSphPlanCache{Complex{Float64}}=SpinSphPlanCache{Complex{Float64}}())
     C′ = coeff_real2complex(C, s)
-    F′ = spinsph_evaluate(C′, s)
+    F′ = spinsph_evaluate(C′, s; cache=cache)
     F = real.(F′)
     return F
 end
-function spinsph_evaluate(C::AbstractArray{SVector{2,Float64},2}, s::Int)
+function spinsph_evaluate(C::AbstractArray{SVector{2,Float64},2}, s::Int;
+                          cache::SpinSphPlanCache{Complex{Float64}}=SpinSphPlanCache{Complex{Float64}}())
     # This function might be correct for other s as well, but I didn't
     # check
     @assert abs(s) == 1
     C′ = map(s -> Complex(s[1], s[2]), C)
-    F′ = spinsph_evaluate(C′, s)
+    F′ = spinsph_evaluate(C′, s; cache=cache)
     F = map(c -> SVector(real(c), imag(c)), F′)
     return F::Array{SVector{2,Float64},2}
 end

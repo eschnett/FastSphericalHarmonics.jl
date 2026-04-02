@@ -27,13 +27,43 @@ sph_mode(l::Integer, m::Integer) = sph_mode(Int(l), Int(m))
 
 ################################################################################
 
+export SphPlanCache
+"""
+    struct SphPlanCache{T}
+
+A cache for storing the Fourier transform plans used internally. This
+makes repeated calls to Fourier transforms more efficient.
+
+When a cache is passed to a function that performs a Fourier transform
+internally, then the cache will be automatically populated if it is
+empty. The same cache can be used for both transforms and evaluations.
+A cache is specific to a particular array element type.
+
+See also: [`sph_transform!`](@ref), [`sph_transform`](@ref),
+[`sph_evaluate!`](@ref), [`sph_evaluate`](@ref)
+"""
+struct SphPlanCache{T}
+    P::Dict{Int,Any}
+    PA::Dict{Int,Any}
+    PS::Dict{Int,Any}
+    function SphPlanCache{T}() where {T}
+        return new{T}(Dict{Int,Any}(), Dict{Int,Any}(), Dict{Int,Any}())
+    end
+end
+
+################################################################################
+
 export sph_transform!
 """
-    sph_transform!(F::Array{T,2}) where {T<:SpHTypes}
+    sph_transform!(F::Array{T,2};
+                   cache::SphPlanCache{T}=SphPlanCache{T}()) where {T<:SpHTypes}
 
 Transform an array of points `F` into spherical harmonics. This is an
 in-place transform, i.e. the array `F` will be overwritten by the
 coefficients. Use [`sph_transform`](@ref) for a non-mutating function.
+
+The optional `cache` argument can be used to speed up repeated calls
+for inputs of the same size; see [`SphPlanCache`](@ref).
 
 Use [`sph_points`](@ref) to caluclate the location of the points on
 the sphere for the input array `F`.
@@ -44,12 +74,14 @@ coefficient array for a particular `l`,`m` mode.
 See also: [`sph_transform`](@ref), [`sph_evaluate!`](@ref),
 [`sph_points`](@ref), [`sph_mode`](@ref)
 """
-function sph_transform!(F::Array{T,2}) where {T<:SpHTypes}
+function sph_transform!(F::Array{T,2};
+                        cache::SphPlanCache{T}=SphPlanCache{T}()) where {T<:SpHTypes}
     N, M = size(F)
     @assert M > 0 && N > 0
     @assert M == 2 * N - 1
-    P = plan_sph2fourier(F)
-    PA = plan_sph_analysis(F)
+    # Get or calculate plan
+    P = get!(() -> plan_sph2fourier(F), cache.P, N)
+    PA = get!(() -> plan_sph_analysis(F), cache.PA, N)
     C = F
     lmul!(PA, C)
     ldiv!(P, C)
@@ -58,12 +90,16 @@ end
 
 export sph_transform
 """
-    C = sph_transform(F::AbstractArray{T,2}) where {T<:SpHTypes}
+    C = sph_transform(F::AbstractArray{T,2};
+                      cache::SphPlanCache{T}=SphPlanCache{T}()) where {T<:SpHTypes}
     C::Array{T,2}
 
 Transform an array of points `F` into spherical harmonics. You can use
 [`sph_transform!`](@ref) for more efficient a mutating function that
 overwrites its argument `F`.
+
+The optional `cache` argument can be used to speed up repeated calls
+for inputs of the same size; see [`SphPlanCache`](@ref).
 
 Use [`sph_points`](@ref) to caluclate the location of the points on the
 sphere for the input array `F`.
@@ -74,20 +110,25 @@ coefficient array for a particular `l`,`m` mode.
 See also: [`sph_transform!`](@ref), [`sph_evaluate`](@ref),
 [`sph_points`](@ref), [`sph_mode`](@ref)
 """
-function sph_transform(F::AbstractArray{T,2}) where {T<:SpHTypes}
-    return sph_transform!(Array(F))
+function sph_transform(F::AbstractArray{T,2};
+                       cache::SphPlanCache{T}=SphPlanCache{T}()) where {T<:SpHTypes}
+    return sph_transform!(Array(F); cache=cache)
 end
 
 ################################################################################
 
 export sph_evaluate!
 """
-    sph_evaluate!(C::Array{T,2}) where {T<:SpHTypes}
+    sph_evaluate!(C::Array{T,2};
+                  cache::SphPlanCache{T}=SphPlanCache{T}()) where {T<:SpHTypes}
 
 Evaluate an array of coefficients `C` on the grid points on a sphere.
 This is an in-place transform, i.e. the array `C` will be overwritten
 by the point values. Use [`sph_evaluate`](@ref) for a non-mutating
 function.
+
+The optional `cache` argument can be used to speed up repeated calls
+for inputs of the same size; see [`SphPlanCache`](@ref).
 
 Use [`sph_mode`](@ref) to calculate the location in the input
 coefficient array for a particular `l`,`m` mode.
@@ -98,12 +139,14 @@ sphere in the output array `F`.
 See also: [`sph_evaluate`](@ref), [`sph_transform!`](@ref),
 [`sph_mode`](@ref), [`sph_points`](@ref)
 """
-function sph_evaluate!(C::Array{T,2}) where {T<:SpHTypes}
+function sph_evaluate!(C::Array{T,2};
+                       cache::SphPlanCache{T}=SphPlanCache{T}()) where {T<:SpHTypes}
     N, M = size(C)
     @assert M > 0 && N > 0
     @assert M == 2 * N - 1
-    P = plan_sph2fourier(C)
-    PS = plan_sph_synthesis(C)
+    # Get or calculate plan
+    P = get!(() -> plan_sph2fourier(C), cache.P, N)
+    PS = get!(() -> plan_sph_synthesis(C), cache.PS, N)
     F = C
     lmul!(P, F)
     lmul!(PS, F)
@@ -112,12 +155,16 @@ end
 
 export sph_evaluate
 """
-    F = sph_evaluate(C::AbstractArray{T,2}) where {T<:SpHTypes}
+    F = sph_evaluate(C::AbstractArray{T,2};
+                     cache::SphPlanCache{T}=SphPlanCache{T}()) where {T<:SpHTypes}
     F::Array{T,2}
 
 Evaluate an array of coefficients `C` on the grid points on a sphere.
 You can use [`sph_evaluate!`](@ref) for more efficient a mutating
 function that overwrites its argument `C`.
+
+The optional `cache` argument can be used to speed up repeated calls
+for inputs of the same size; see [`SphPlanCache`](@ref).
 
 Use [`sph_mode`](@ref) to calculate the location in the input
 coefficient array for a particular `l`,`m` mode.
@@ -128,7 +175,10 @@ sphere in the output array `F`.
 See also: [`sph_evaluate!`](@ref), [`sph_transform`](@ref),
 [`sph_mode`](@ref), [`sph_points`](@ref)
 """
-sph_evaluate(C::Array{T,2}) where {T<:SpHTypes} = sph_evaluate!(Array(C))
+function sph_evaluate(C::Array{T,2};
+                      cache::SphPlanCache{T}=SphPlanCache{T}()) where {T<:SpHTypes}
+    return sph_evaluate!(Array(C); cache=cache)
+end
 
 ################################################################################
 

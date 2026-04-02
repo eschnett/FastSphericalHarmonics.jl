@@ -61,8 +61,9 @@ end
 end
 
 @testset "Spin spherical harmonics: simple modes (s=$s, $T)" for s in -2:2,
-                                                                 T in [Float64,
-                                                                       Complex{Float64}]
+                                                                 T in
+                                                                 [Float64,
+                                                                  Complex{Float64}]
 
     T <: Real && s ≠ 0 && continue
 
@@ -451,6 +452,49 @@ end
 
         ð̄ðF = spinsph_evaluate(ð̄ðC, 0)
         ðð̄F = spinsph_evaluate(ðð̄C, 0)
+
+        C₀ = sph_transform(F)
+        ΔC₀ = sph_laplace(C₀)
+        ΔF₀ = sph_evaluate(ΔC₀)
+
+        @test ð̄ðF ≈ ΔF₀
+        @test ðð̄F ≈ ΔF₀
+    end
+end
+
+@testset "Spin spherical harmonics: caching ($T)" for T in [Float64]
+    lmax = 10
+
+    N = lmax + 1
+    Θ, Φ = sph_points(N)
+    @test length(Θ) == N
+    M = length(Φ)
+
+    cache = SpinSphPlanCache{Complex{T}}()
+
+    for iter in 1:10
+        F = randn(T, N, M)
+
+        C = spinsph_transform(F, 0; cache=cache)
+        ðC = spinsph_eth(C, 0)
+        ð̄C = spinsph_ethbar(C, 0)
+        ð̄ðC = spinsph_ethbar(ðC, 1)
+        ðð̄C = spinsph_eth(ð̄C, -1)
+
+        for l in 0:lmax, m in (-l):l
+            if l == 0
+                @test norm(ð̄ðC[spinsph_mode(0, l, m)]) ≤ sqrt(eps(T))
+                @test norm(ðð̄C[spinsph_mode(0, l, m)]) ≤ sqrt(eps(T))
+            else
+                @test ð̄ðC[spinsph_mode(0, l, m)] ≈
+                      -l * (l + 1) * C[spinsph_mode(0, l, m)]
+                @test ðð̄C[spinsph_mode(0, l, m)] ≈
+                      -l * (l + 1) * C[spinsph_mode(0, l, m)]
+            end
+        end
+
+        ð̄ðF = spinsph_evaluate(ð̄ðC, 0; cache=cache)
+        ðð̄F = spinsph_evaluate(ðð̄C, 0; cache=cache)
 
         C₀ = sph_transform(F)
         ΔC₀ = sph_laplace(C₀)
